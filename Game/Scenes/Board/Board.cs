@@ -23,19 +23,26 @@ public partial class Board : Control
     public TileTextureSet Textures { get; set; }
 
     private GridContainer _grid;
+    private ColorRect _background;
+    private MarginContainer _frame;
     private readonly Tile[] _tiles = new Tile[BoardState.CellCount];
     private BoardState _state;
     private int _selectedIndex = -1;
 
     public override void _Ready()
     {
-        _grid = GetNodeOrNull<GridContainer>("AspectRatioContainer/Grid");
+        _grid = GetNodeOrNull<GridContainer>("AspectRatioContainer/Frame/Grid");
         if (_grid == null)
         {
-            GD.PushError("Board: expected a GridContainer at 'AspectRatioContainer/Grid'.");
+            GD.PushError("Board: expected a GridContainer at 'AspectRatioContainer/Frame/Grid'.");
             return;
         }
 
+        _background = GetNodeOrNull<ColorRect>("AspectRatioContainer/Background");
+        _frame = GetNodeOrNull<MarginContainer>("AspectRatioContainer/Frame");
+
+        ApplyGridSpacing();
+        ApplyBoardFrame();
         BuildAndRender();
     }
 
@@ -53,6 +60,49 @@ public partial class Board : Control
         RenderAll();
     }
 
+    /// <summary>Applies the larger inter-box gap to the outer grid (see <see cref="BuildBoard"/>).</summary>
+    private void ApplyGridSpacing()
+    {
+        if (_grid == null || Textures == null)
+        {
+            return;
+        }
+
+        _grid.AddThemeConstantOverride("h_separation", Textures.BoxGap);
+        _grid.AddThemeConstantOverride("v_separation", Textures.BoxGap);
+    }
+
+    /// <summary>
+    /// Frames the board: paints the shared grid-line color behind the grid and insets the grid by
+    /// BoxGap on every side, so the same color that fills the gaps also forms a BoxGap-wide border.
+    /// </summary>
+    private void ApplyBoardFrame()
+    {
+        if (Textures == null)
+        {
+            return;
+        }
+
+        if (_background != null)
+        {
+            _background.Color = Textures.GridLineColor;
+        }
+
+        if (_frame != null)
+        {
+            foreach (string side in new[] { "margin_left", "margin_top", "margin_right", "margin_bottom" })
+            {
+                _frame.AddThemeConstantOverride(side, Textures.BoxGap);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Builds the board as a 3x3 grid of 3x3 box grids. A single GridContainer can only apply one
+    /// uniform separation, so nesting is what lets tiles inside a box sit closer (CellGap) than the
+    /// boxes themselves (BoxGap). Tiles are still tracked by their logical board index, so the rest
+    /// of the code is unaffected by the visual nesting.
+    /// </summary>
     private void BuildBoard()
     {
         if (_grid == null || TileScene == null)
@@ -65,17 +115,47 @@ public partial class Board : Control
             child.QueueFree();
         }
 
-        _grid.Columns = BoardState.Size;
+        _grid.Columns = BoardState.BoxSize;
+        int cellGap = Textures?.CellGap ?? 1;
 
-        for (int i = 0; i < BoardState.CellCount; i++)
+        for (int boxRow = 0; boxRow < BoardState.BoxSize; boxRow++)
         {
-            var tile = TileScene.Instantiate<Tile>();
-            tile.Index = i;
-            tile.Textures = Textures;
-            tile.Pressed += OnTilePressed;
-            _grid.AddChild(tile);
-            _tiles[i] = tile;
+            for (int boxCol = 0; boxCol < BoardState.BoxSize; boxCol++)
+            {
+                GridContainer box = CreateBox(cellGap);
+                _grid.AddChild(box);
+
+                for (int cellRow = 0; cellRow < BoardState.BoxSize; cellRow++)
+                {
+                    for (int cellCol = 0; cellCol < BoardState.BoxSize; cellCol++)
+                    {
+                        int row = (boxRow * BoardState.BoxSize) + cellRow;
+                        int col = (boxCol * BoardState.BoxSize) + cellCol;
+                        int index = BoardState.Index(row, col);
+
+                        var tile = TileScene.Instantiate<Tile>();
+                        tile.Index = index;
+                        tile.Textures = Textures;
+                        tile.Pressed += OnTilePressed;
+                        box.AddChild(tile);
+                        _tiles[index] = tile;
+                    }
+                }
+            }
         }
+    }
+
+    private static GridContainer CreateBox(int cellGap)
+    {
+        var box = new GridContainer
+        {
+            Columns = BoardState.BoxSize,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+        };
+        box.AddThemeConstantOverride("h_separation", cellGap);
+        box.AddThemeConstantOverride("v_separation", cellGap);
+        return box;
     }
 
     /// <summary>Pushes every cell's state down to its tile (state flows one way: board → tile).</summary>

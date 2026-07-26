@@ -21,6 +21,29 @@ public partial class TileTextureSet : Resource
 	[Export]
 	public Texture2D[] DigitTextures { get; set; } = new Texture2D[10];
 
+	[ExportGroup("Board")]
+
+	/// <summary>Gap in pixels between adjacent tiles inside the same 3x3 box.</summary>
+	[Export(PropertyHint.Range, "0,32,1")]
+	public int CellGap { get; set; } = 1;
+
+	/// <summary>Gap in pixels between the 3x3 boxes (the thicker Sudoku dividers).</summary>
+	[Export(PropertyHint.Range, "0,32,1")]
+	public int BoxGap { get; set; } = 3;
+
+	/// <summary>
+	/// Color painted behind the grid: it shows through the tile gaps as grid lines and, thanks to
+	/// the BoxGap-wide inset, as the border framing the whole board.
+	/// </summary>
+	[Export]
+	public Color GridLineColor { get; set; } = new Color(0.20f, 0.20f, 0.25f);
+
+	[ExportGroup("Tile")]
+
+	/// <summary>Background fill of each cell (the surface the digit and hints sit on).</summary>
+	[Export]
+	public Color TileColor { get; set; } = new Color(0.96f, 0.96f, 0.94f);
+
 	[ExportGroup("Highlight")]
 
 	/// <summary>Fill behind the selected cell (the stronger of the two highlight tiers).</summary>

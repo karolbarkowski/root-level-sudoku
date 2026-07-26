@@ -163,6 +163,11 @@ public partial class Tile : Control
 			return;
 		}
 
+		if (_background != null && _textures != null)
+		{
+			_background.Color = _textures.TileColor;
+		}
+
 		int value = _data?.Value ?? 0;
 		bool isGiven = _data?.IsGiven ?? false;
 		bool hasValue = value != 0;

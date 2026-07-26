@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="TileTextureSet" format=3 uid="uid://c0texset00001"]
 
-[ext_resource type="Script" uid="uid://c4r0iboe36vim" path="res://Resources/TileTextureSet.cs" id="1_tts"]
+[ext_resource type="Script" uid="uid://c4r0iboe36vim" path="res://Resources/TileTextureSet.cs" id="1_sgihl"]
 
 [resource]
-script = ExtResource("1_tts")
+script = ExtResource("1_sgihl")

@@ -23,8 +23,14 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Grid" type="GridContainer" parent="AspectRatioContainer" unique_id=1667290759]
+[node name="Background" type="ColorRect" parent="AspectRatioContainer" unique_id=175859151]
 layout_mode = 2
-theme_override_constants/h_separation = 2
-theme_override_constants/v_separation = 2
-columns = 9
+mouse_filter = 2
+color = Color(0.2, 0.2, 0.25, 1)
+
+[node name="Frame" type="MarginContainer" parent="AspectRatioContainer" unique_id=175859152]
+layout_mode = 2
+
+[node name="Grid" type="GridContainer" parent="AspectRatioContainer/Frame" unique_id=1667290759]
+layout_mode = 2
+columns = 3

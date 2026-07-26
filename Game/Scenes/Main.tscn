@@ -1,10 +1,10 @@
-[gd_scene load_steps=4 format=3 uid="uid://c3main0000001"]
+[gd_scene format=3 uid="uid://c3main0000001"]
 
-[ext_resource type="Script" path="res://Scenes/Main.cs" id="1_main"]
+[ext_resource type="Script" uid="uid://c10of8qy714oo" path="res://Scenes/Main.cs" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://c2board000001" path="res://Scenes/Board/Board.tscn" id="2_board"]
 [ext_resource type="PackedScene" uid="uid://cnbtn00000001" path="res://Scenes/NumberButton/NumberButton.tscn" id="3_nbtn"]
 
-[node name="Main" type="Control"]
+[node name="Main" type="Control" unique_id=1235162363 node_paths=PackedStringArray("Board")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -15,7 +15,7 @@ script = ExtResource("1_main")
 Board = NodePath("MarginContainer/VBoxContainer/Board")
 NumberButtonScene = ExtResource("3_nbtn")
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=894572590]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -27,15 +27,15 @@ theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 12
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1542203857]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="Board" parent="MarginContainer/VBoxContainer" instance=ExtResource("2_board")]
+[node name="Board" parent="MarginContainer/VBoxContainer" unique_id=1711416524 instance=ExtResource("2_board")]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="NumberBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+[node name="NumberBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1955768322]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 8
