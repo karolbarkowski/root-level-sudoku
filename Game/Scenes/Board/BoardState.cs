@@ -1,0 +1,129 @@
+using System;
+
+namespace SudokuEndless;
+
+/// <summary>
+/// The authoritative game state: a 9x9 grid of <see cref="CellData"/>. Owned by the board,
+/// which is the single source of truth. This is a plain C# class (no node in the tree) so the
+/// game logic stays decoupled from the view and is straightforward to test.
+///
+/// All mutation goes through this type; tiles never write here. After a mutation the board
+/// re-pushes the affected cells down to the tiles (see <c>Board.RenderAll</c>).
+/// </summary>
+public class BoardState
+{
+    public const int Size = 9;
+    public const int BoxSize = 3;
+    public const int CellCount = Size * Size;
+
+    private readonly CellData[] _cells = new CellData[CellCount];
+
+    public BoardState()
+    {
+        for (int i = 0; i < CellCount; i++)
+        {
+            _cells[i] = new CellData();
+        }
+    }
+
+    public static int Index(int row, int col) => (row * Size) + col;
+    public static int RowOf(int index) => index / Size;
+    public static int ColOf(int index) => index % Size;
+
+    public CellData GetCell(int index) => _cells[index];
+    public CellData GetCell(int row, int col) => _cells[Index(row, col)];
+
+    /// <summary>Sets a player value and clears the cell's hints. No-op on given (clue) cells.</summary>
+    public void SetValue(int index, int value)
+    {
+        CellData cell = _cells[index];
+        if (cell.IsGiven)
+        {
+            return;
+        }
+
+        cell.Value = value;
+        cell.Hints = Array.Empty<int>();
+    }
+
+    /// <summary>Toggles a pencil mark. Only allowed on empty, non-given cells.</summary>
+    public void ToggleHint(int index, int n)
+    {
+        CellData cell = _cells[index];
+        if (cell.IsGiven || !cell.IsEmpty)
+        {
+            return;
+        }
+
+        cell.ToggleHint(n);
+    }
+
+    /// <summary>Clears a player cell back to empty. No-op on given (clue) cells.</summary>
+    public void ClearCell(int index)
+    {
+        CellData cell = _cells[index];
+        if (cell.IsGiven)
+        {
+            return;
+        }
+
+        cell.Clear();
+    }
+
+    // --- Validation helpers (stubbed for a later slice; input/win-detection build on these) ---
+
+    /// <summary>Whether placing <paramref name="value"/> at <paramref name="index"/> breaks no row/col/box rule.</summary>
+    public bool IsValidMove(int index, int value)
+    {
+        if (value < 1 || value > 9)
+        {
+            return false;
+        }
+
+        int row = RowOf(index);
+        int col = ColOf(index);
+
+        for (int k = 0; k < Size; k++)
+        {
+            if (k != col && GetCell(row, k).Value == value)
+            {
+                return false;
+            }
+
+            if (k != row && GetCell(k, col).Value == value)
+            {
+                return false;
+            }
+        }
+
+        int boxRow = (row / BoxSize) * BoxSize;
+        int boxCol = (col / BoxSize) * BoxSize;
+        for (int r = boxRow; r < boxRow + BoxSize; r++)
+        {
+            for (int c = boxCol; c < boxCol + BoxSize; c++)
+            {
+                if ((r != row || c != col) && GetCell(r, c).Value == value)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>True when every cell is filled and no rule is broken.</summary>
+    public bool IsSolved()
+    {
+        for (int i = 0; i < CellCount; i++)
+        {
+            int value = _cells[i].Value;
+            if (value == 0 || !IsValidMove(i, value))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
