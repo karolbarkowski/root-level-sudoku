@@ -2,6 +2,16 @@ using Godot;
 
 namespace SudokuEndless;
 
+/// <summary>How a tapped number is applied to the selected cell.</summary>
+public enum InputMode
+{
+	/// <summary>The digit becomes the cell's value.</summary>
+	Value,
+
+	/// <summary>The digit is toggled as a pencil-mark hint.</summary>
+	Hints,
+}
+
 /// <summary>
 /// Top-level game coordinator. Builds the number-selection bar below the board, routes digit
 /// taps into the board, and keeps each button's disabled state in sync with how many of that
@@ -18,7 +28,9 @@ public partial class Main : Control
 
 	private Board _board;
 	private HBoxContainer _numberBar;
+	private CheckButton _modeToggle;
 	private NumberButton[] _buttons;
+	private InputMode _mode = InputMode.Value;
 
 	public override void _Ready()
 	{
@@ -30,6 +42,13 @@ public partial class Main : Control
 			return;
 		}
 
+		_modeToggle = GetNodeOrNull<CheckButton>("%ModeToggle");
+		if (_modeToggle != null)
+		{
+			_modeToggle.Toggled += OnModeToggled;
+			_mode = _modeToggle.ButtonPressed ? InputMode.Hints : InputMode.Value;
+		}
+
 		if (_board != null)
 		{
 			_board.BoardChanged += RefreshDisabledStates;
@@ -37,6 +56,11 @@ public partial class Main : Control
 
 		BuildNumberButtons();
 		RefreshDisabledStates();
+	}
+
+	private void OnModeToggled(bool hintsOn)
+	{
+		_mode = hintsOn ? InputMode.Hints : InputMode.Value;
 	}
 
 	private void BuildNumberButtons()
@@ -71,10 +95,25 @@ public partial class Main : Control
 		return button;
 	}
 
-	/// <summary>A digit was tapped: place it into the board's currently selected cell.</summary>
+	/// <summary>
+	/// A digit was tapped: in value mode it becomes the cell's value; in hint mode it toggles a
+	/// pencil mark. Erase (0) always clears the cell regardless of mode.
+	/// </summary>
 	private void OnNumberPressed(int number)
 	{
-		_board?.SetSelectedValue(number);
+		if (_board == null)
+		{
+			return;
+		}
+
+		if (number == 0 || _mode == InputMode.Value)
+		{
+			_board.SetSelectedValue(number);
+		}
+		else
+		{
+			_board.ToggleSelectedHint(number);
+		}
 	}
 
 	/// <summary>Disables each digit button whose value already appears the maximum number of times.</summary>

@@ -75,14 +75,39 @@ public partial class Board : Control
         }
 
         _state.SetValue(_selectedIndex, value);
+        RefreshSelectedTile(cell);
+        EmitSignal(SignalName.BoardChanged);
+    }
 
-        // Re-assigning the (same) cell reference re-runs the tile's Data setter, refreshing visuals.
+    /// <summary>
+    /// Toggles pencil-mark <paramref name="n"/> on the selected cell. No-ops when nothing is
+    /// selected or the cell is a given or already filled (hints only live in empty cells).
+    /// </summary>
+    public void ToggleSelectedHint(int n)
+    {
+        if (_selectedIndex < 0 || _state == null)
+        {
+            return;
+        }
+
+        CellData cell = _state.GetCell(_selectedIndex);
+        if (cell.IsGiven || !cell.IsEmpty)
+        {
+            return;
+        }
+
+        _state.ToggleHint(_selectedIndex, n);
+        RefreshSelectedTile(cell);
+        EmitSignal(SignalName.BoardChanged);
+    }
+
+    // Re-assigning the (same) cell reference re-runs the tile's Data setter, refreshing visuals.
+    private void RefreshSelectedTile(CellData cell)
+    {
         if (_tiles[_selectedIndex] != null)
         {
             _tiles[_selectedIndex].Data = cell;
         }
-
-        EmitSignal(SignalName.BoardChanged);
     }
 
     /// <summary>Loads the hardcoded puzzle, (re)builds the tile grid, and renders it.</summary>
