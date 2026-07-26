@@ -30,6 +30,21 @@ public class BoardState
     public static int RowOf(int index) => index / Size;
     public static int ColOf(int index) => index % Size;
 
+    // --- Cell geometry (used for peer highlighting now, and validation later) ---
+
+    public static bool SameRow(int a, int b) => RowOf(a) == RowOf(b);
+    public static bool SameColumn(int a, int b) => ColOf(a) == ColOf(b);
+
+    public static bool SameBox(int a, int b) =>
+        (RowOf(a) / BoxSize == RowOf(b) / BoxSize) &&
+        (ColOf(a) / BoxSize == ColOf(b) / BoxSize);
+
+    /// <summary>
+    /// True when two cells share a row, column, or 3x3 box. A cell is trivially a peer of itself;
+    /// callers that care about the distinction (e.g. selection vs. peer highlight) handle it first.
+    /// </summary>
+    public static bool ArePeers(int a, int b) => SameRow(a, b) || SameColumn(a, b) || SameBox(a, b);
+
     public CellData GetCell(int index) => _cells[index];
     public CellData GetCell(int row, int col) => _cells[Index(row, col)];
 
@@ -68,62 +83,5 @@ public class BoardState
         }
 
         cell.Clear();
-    }
-
-    // --- Validation helpers (stubbed for a later slice; input/win-detection build on these) ---
-
-    /// <summary>Whether placing <paramref name="value"/> at <paramref name="index"/> breaks no row/col/box rule.</summary>
-    public bool IsValidMove(int index, int value)
-    {
-        if (value < 1 || value > 9)
-        {
-            return false;
-        }
-
-        int row = RowOf(index);
-        int col = ColOf(index);
-
-        for (int k = 0; k < Size; k++)
-        {
-            if (k != col && GetCell(row, k).Value == value)
-            {
-                return false;
-            }
-
-            if (k != row && GetCell(k, col).Value == value)
-            {
-                return false;
-            }
-        }
-
-        int boxRow = (row / BoxSize) * BoxSize;
-        int boxCol = (col / BoxSize) * BoxSize;
-        for (int r = boxRow; r < boxRow + BoxSize; r++)
-        {
-            for (int c = boxCol; c < boxCol + BoxSize; c++)
-            {
-                if ((r != row || c != col) && GetCell(r, c).Value == value)
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    /// <summary>True when every cell is filled and no rule is broken.</summary>
-    public bool IsSolved()
-    {
-        for (int i = 0; i < CellCount; i++)
-        {
-            int value = _cells[i].Value;
-            if (value == 0 || !IsValidMove(i, value))
-            {
-                return false;
-            }
-        }
-
-        return true;
     }
 }

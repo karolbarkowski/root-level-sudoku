@@ -1,6 +1,6 @@
 using Godot;
-using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SudokuEndless;
 
@@ -17,7 +17,7 @@ namespace SudokuEndless;
 public partial class CellData : Resource
 {
     private int _value;
-    private int[] _hints = [];
+    private readonly HashSet<int> _hints = [];
 
     /// <summary>Current value: 0 = empty, 1-9 = filled.</summary>
     [Export(PropertyHint.Range, "0,9")]
@@ -35,21 +35,30 @@ public partial class CellData : Resource
     [Export]
     public bool IsGiven { get; set; }
 
-    /// <summary>Pencil-mark hints present in this cell (values 1-9, sorted, unique).</summary>
+    /// <summary>
+    /// Pencil-mark hints (values 1-9). Backed by a <see cref="HashSet{T}"/> for simple set logic;
+    /// exposed as a sorted array because Godot cannot export a HashSet — the array is the
+    /// serialization / inspector surface, the set is the source of truth.
+    /// </summary>
     [Export]
     public int[] Hints
     {
-        get => _hints;
+        get => _hints.OrderBy(n => n).ToArray();
         set
         {
-            _hints = value ?? Array.Empty<int>();
+            _hints.Clear();
+            if (value != null)
+            {
+                _hints.UnionWith(value);
+            }
+
             EmitChanged();
         }
     }
 
     public bool IsEmpty => _value == 0;
 
-    public bool HasHint(int n) => Array.IndexOf(_hints, n) >= 0;
+    public bool HasHint(int n) => _hints.Contains(n);
 
     /// <summary>Adds the hint if absent, removes it if present. Ignores out-of-range values.</summary>
     public void ToggleHint(int n)
@@ -59,23 +68,20 @@ public partial class CellData : Resource
             return;
         }
 
-        var set = new HashSet<int>(_hints);
-        if (!set.Add(n))
+        if (!_hints.Add(n))
         {
-            set.Remove(n);
+            _hints.Remove(n);
         }
 
-        var arr = new int[set.Count];
-        set.CopyTo(arr);
-        Array.Sort(arr);
-        Hints = arr;
+        EmitChanged();
     }
 
     /// <summary>Resets the cell to empty with no hints (value and pencil marks cleared).</summary>
     public void Clear()
     {
         Value = 0;
-        Hints = [];
+        _hints.Clear();
+        EmitChanged();
     }
 
     /// <summary>Returns an independent deep copy so shared references cannot leak between owners.</summary>

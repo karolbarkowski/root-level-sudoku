@@ -95,15 +95,40 @@ public partial class Board : Control
     /// </summary>
     private void OnTilePressed(int index)
     {
-        if (_selectedIndex >= 0 && _tiles[_selectedIndex] != null)
+        _selectedIndex = index;
+        ApplyHighlights();
+    }
+
+    /// <summary>
+    /// Recomputes every tile's highlight tier from the current selection: the selected cell plus
+    /// its whole row, column, and 3x3 box. Cheap enough (81 cells) to redo on each tap rather than
+    /// track deltas.
+    /// </summary>
+    private void ApplyHighlights()
+    {
+        for (int i = 0; i < BoardState.CellCount; i++)
         {
-            _tiles[_selectedIndex].ClearHighlight();
+            if (_tiles[i] == null)
+            {
+                continue;
+            }
+
+            _tiles[i].Highlight = HighlightFor(i);
+        }
+    }
+
+    private TileHighlight HighlightFor(int index)
+    {
+        if (_selectedIndex < 0)
+        {
+            return TileHighlight.None;
         }
 
-        _selectedIndex = index;
-        if (_tiles[index] != null)
+        if (index == _selectedIndex)
         {
-            _tiles[index].Highlight();
+            return TileHighlight.Selected;
         }
+
+        return BoardState.ArePeers(index, _selectedIndex) ? TileHighlight.Peer : TileHighlight.None;
     }
 }

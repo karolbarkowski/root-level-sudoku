@@ -2,6 +2,19 @@ using Godot;
 
 namespace SudokuEndless;
 
+/// <summary>How strongly a tile is highlighted, driven by the board's current selection.</summary>
+public enum TileHighlight
+{
+	/// <summary>Not related to the selection.</summary>
+	None,
+
+	/// <summary>Shares the selected cell's row, column, or 3x3 box.</summary>
+	Peer,
+
+	/// <summary>Is the selected cell itself.</summary>
+	Selected,
+}
+
 /// <summary>
 /// A single Sudoku cell's view. It is a pure, "dumb" view: it renders the <see cref="CellData"/>
 /// the board pushes into it and reports taps back up via <see cref="PressedEventHandler"/>. It
@@ -23,7 +36,7 @@ public partial class Tile : Control
 	public int Index { get; set; }
 
 	private CellData _data;
-	private bool _isHighlighted;
+	private TileHighlight _highlight;
 	private TileTextureSet _textures;
 
 	// Cached child nodes (see CacheNodes). Guarded by _nodesReady until _Ready has run.
@@ -47,14 +60,17 @@ public partial class Tile : Control
 		}
 	}
 
-	/// <summary>Transient selection highlight. Driven by the board, not part of the puzzle model.</summary>
+	/// <summary>
+	/// Transient selection highlight tier (none / peer / selected). Driven by the board, not part
+	/// of the puzzle model.
+	/// </summary>
 	[Export]
-	public bool IsHighlighted
+	public TileHighlight Highlight
 	{
-		get => _isHighlighted;
+		get => _highlight;
 		set
 		{
-			_isHighlighted = value;
+			_highlight = value;
 			RefreshHighlight();
 		}
 	}
@@ -102,12 +118,6 @@ public partial class Tile : Control
 		RefreshVisuals();
 		RefreshHighlight();
 	}
-
-	/// <summary>Sets the highlight on. Part of the "highlight itself" requirement.</summary>
-	public void Highlight() => IsHighlighted = true;
-
-	/// <summary>Clears the highlight. Part of the "clear itself" requirement.</summary>
-	public void ClearHighlight() => IsHighlighted = false;
 
 	public override void _GuiInput(InputEvent @event)
 	{
@@ -207,11 +217,20 @@ public partial class Tile : Control
 			return;
 		}
 
-		if (_textures != null)
+		if (_highlight == TileHighlight.None)
 		{
-			_highlightRect.Color = _textures.HighlightColor;
+			_highlightRect.Visible = false;
+			return;
 		}
 
-		_highlightRect.Visible = _isHighlighted;
+		// Keep the scene's default color if no texture set is injected yet.
+		if (_textures != null)
+		{
+			_highlightRect.Color = _highlight == TileHighlight.Selected
+				? _textures.SelectedHighlightColor
+				: _textures.PeerHighlightColor;
+		}
+
+		_highlightRect.Visible = true;
 	}
 }
