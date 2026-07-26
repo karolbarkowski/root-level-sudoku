@@ -5,7 +5,7 @@ using System.Diagnostics;
 Stopwatch sw = new();
 sw.Start();
 
-Board board = SudokuGenerator.Generate(SudokuGenerator.Difficulty.Beyond);
+Board board = SudokuGenerator.Generate(SudokuGenerator.Difficulty.Easy);
 sw.Stop();
 
 Console.WriteLine($"Generated in {sw.ElapsedMilliseconds}ms");

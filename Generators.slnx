@@ -1,6 +1,11 @@
 <Solution>
+  <Project Path="Game/sudoku.csproj">
+    <BuildType Solution="Release|*" Project="ExportDebug" />
+  </Project>
   <Project Path="Generators/Generators.csproj" Id="83b57167-e350-43e4-88b8-70db656397c8" />
-  <Project Path="Generators.Benchmarks/Generators.Benchmarks.csproj" />
-  <Project Path="Generators.Console/Generators.Console.csproj" />
-  <Project Path="Generators.Tests.Unit/Generators.Tests.Unit.csproj" />
+  <Folder Name="/Tests/">
+    <Project Path="Generators.Benchmarks/Generators.Benchmarks.csproj" />
+    <Project Path="Generators.Console/Generators.Console.csproj" />
+    <Project Path="Generators.Tests.Unit/Generators.Tests.Unit.csproj" />
+  </Folder>
 </Solution>
