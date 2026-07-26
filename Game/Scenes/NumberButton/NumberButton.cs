@@ -13,20 +13,27 @@ namespace SudokuEndless;
 [Tool]
 public partial class NumberButton : Control
 {
+	/// <summary>Emitted when an enabled button is tapped. Carries the digit it represents.</summary>
+	[Signal]
+	public delegate void PressedEventHandler(int number);
+
 	private int _number = 1;
 	private bool _isDisabled;
 
 	private Label _label;
 	private bool _nodesReady;
 
-	/// <summary>The digit shown on the button (1-9).</summary>
-	[Export(PropertyHint.Range, "1,9")]
+	/// <summary>
+	/// The digit this button represents (1-9), or 0 for the erase button (rendered blank). Tapping
+	/// emits this value; the board treats 0 as "clear the cell".
+	/// </summary>
+	[Export(PropertyHint.Range, "0,9")]
 	public int Number
 	{
 		get => _number;
 		set
 		{
-			_number = Mathf.Clamp(value, 1, 9);
+			_number = Mathf.Clamp(value, 0, 9);
 			RefreshText();
 		}
 	}
@@ -54,11 +61,29 @@ public partial class NumberButton : Control
 		RefreshDisabled();
 	}
 
+	public override void _GuiInput(InputEvent @event)
+	{
+		if (_isDisabled)
+		{
+			return;
+		}
+
+		bool pressed =
+			@event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } ||
+			@event is InputEventScreenTouch { Pressed: true };
+
+		if (pressed)
+		{
+			EmitSignal(SignalName.Pressed, _number);
+			AcceptEvent();
+		}
+	}
+
 	private void RefreshText()
 	{
 		if (_nodesReady)
 		{
-			_label.Text = _number.ToString();
+			_label.Text = _number == 0 ? string.Empty : _number.ToString();
 		}
 	}
 

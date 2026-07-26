@@ -14,6 +14,10 @@ namespace SudokuEndless;
 [Tool]
 public partial class Board : Control
 {
+    /// <summary>Emitted after the board's state changes, so observers (e.g. the number bar) refresh.</summary>
+    [Signal]
+    public delegate void BoardChangedEventHandler();
+
     /// <summary>The Tile scene instanced once per cell.</summary>
     [Export]
     public PackedScene TileScene { get; set; }
@@ -51,6 +55,35 @@ public partial class Board : Control
     /// script to disable number buttons whose digit is fully placed.
     /// </summary>
     public int[] GetValueCounts() => _state?.GetValueCounts() ?? new int[BoardState.Size + 1];
+
+    /// <summary>
+    /// Writes <paramref name="value"/> into the currently selected cell and refreshes its tile.
+    /// No-ops when nothing is selected or the cell is a given (clue). Emits <see cref="BoardChanged"/>
+    /// on an actual change so the number bar can update.
+    /// </summary>
+    public void SetSelectedValue(int value)
+    {
+        if (_selectedIndex < 0 || _state == null)
+        {
+            return;
+        }
+
+        CellData cell = _state.GetCell(_selectedIndex);
+        if (cell.IsGiven)
+        {
+            return;
+        }
+
+        _state.SetValue(_selectedIndex, value);
+
+        // Re-assigning the (same) cell reference re-runs the tile's Data setter, refreshing visuals.
+        if (_tiles[_selectedIndex] != null)
+        {
+            _tiles[_selectedIndex].Data = cell;
+        }
+
+        EmitSignal(SignalName.BoardChanged);
+    }
 
     /// <summary>Loads the hardcoded puzzle, (re)builds the tile grid, and renders it.</summary>
     public void BuildAndRender()
