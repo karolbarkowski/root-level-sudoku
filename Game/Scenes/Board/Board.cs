@@ -39,6 +39,12 @@ public partial class Board : Control
         BuildAndRender();
     }
 
+    /// <summary>
+    /// Counts of each digit (1-9) currently on the board, indexed by value. Used by the main
+    /// script to disable number buttons whose digit is fully placed.
+    /// </summary>
+    public int[] GetValueCounts() => _state?.GetValueCounts() ?? new int[BoardState.Size + 1];
+
     /// <summary>Loads the hardcoded puzzle, (re)builds the tile grid, and renders it.</summary>
     public void BuildAndRender()
     {

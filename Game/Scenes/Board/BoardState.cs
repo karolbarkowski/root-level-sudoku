@@ -48,6 +48,26 @@ public class BoardState
     public CellData GetCell(int index) => _cells[index];
     public CellData GetCell(int row, int col) => _cells[Index(row, col)];
 
+    /// <summary>
+    /// Counts how many times each digit (1-9) currently appears on the board, givens included.
+    /// The returned array is indexed by value (index 0 unused), so a digit is fully placed when
+    /// <c>counts[value] == Size</c>.
+    /// </summary>
+    public int[] GetValueCounts()
+    {
+        var counts = new int[Size + 1];
+        foreach (CellData cell in _cells)
+        {
+            int value = cell.Value;
+            if (value >= 1 && value <= Size)
+            {
+                counts[value]++;
+            }
+        }
+
+        return counts;
+    }
+
     /// <summary>Sets a player value and clears the cell's hints. No-op on given (clue) cells.</summary>
     public void SetValue(int index, int value)
     {
