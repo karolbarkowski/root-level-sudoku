@@ -21,6 +21,8 @@ public partial class TileTextureSet : Resource
 	[Export]
 	public Texture2D[] DigitTextures { get; set; } = new Texture2D[10];
 
+	[ExportGroup("Highlight")]
+
 	/// <summary>Fill behind the selected cell (the stronger of the two highlight tiers).</summary>
 	[Export]
 	public Color SelectedHighlightColor { get; set; } = new Color(0.30f, 0.55f, 0.95f, 0.40f);
@@ -29,12 +31,31 @@ public partial class TileTextureSet : Resource
 	[Export]
 	public Color PeerHighlightColor { get; set; } = new Color(0.30f, 0.55f, 0.95f, 0.14f);
 
+	[ExportGroup("Font")]
+
+	/// <summary>Typeface for the value digit and pencil marks. Null falls back to the theme font.</summary>
+	[Export]
+	public Font Font { get; set; }
+
+	/// <summary>Value digit height as a fraction of the cell's height (0.6 = 60% of the cell).</summary>
+	[Export(PropertyHint.Range, "0.05,1.0,0.01")]
+	public float ValueFontScale { get; set; } = 0.6f;
+
+	/// <summary>Pencil-mark height as a fraction of the cell's height.</summary>
+	[Export(PropertyHint.Range, "0.05,1.0,0.01")]
+	public float HintFontScale { get; set; } = 0.2f;
+
+	[ExportSubgroup("Colors")]
+
+	/// <summary>Font color for given (clue) digits.</summary>
 	[Export]
 	public Color GivenColor { get; set; } = new Color(0.13f, 0.13f, 0.16f);
 
+	/// <summary>Font color for player-entered digits.</summary>
 	[Export]
 	public Color PlayerColor { get; set; } = new Color(0.20f, 0.35f, 0.70f);
 
+	/// <summary>Font color for pencil-mark hints.</summary>
 	[Export]
 	public Color HintColor { get; set; } = new Color(0.45f, 0.45f, 0.50f);
 
@@ -48,4 +69,10 @@ public partial class TileTextureSet : Resource
 
 		return DigitTextures[value];
 	}
+
+	/// <summary>Value font size in px for a given cell height, from <see cref="ValueFontScale"/>.</summary>
+	public int ValueFontSize(float cellHeight) => Mathf.Max(1, Mathf.RoundToInt(cellHeight * ValueFontScale));
+
+	/// <summary>Hint font size in px for a given cell height, from <see cref="HintFontScale"/>.</summary>
+	public int HintFontSize(float cellHeight) => Mathf.Max(1, Mathf.RoundToInt(cellHeight * HintFontScale));
 }

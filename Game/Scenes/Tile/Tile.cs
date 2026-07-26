@@ -85,6 +85,7 @@ public partial class Tile : Control
 			_textures = value;
 			RefreshVisuals();
 			RefreshHighlight();
+			RefreshFonts();
 		}
 	}
 
@@ -115,8 +116,10 @@ public partial class Tile : Control
 	public override void _Ready()
 	{
 		CacheNodes();
+		Resized += RefreshFonts;
 		RefreshVisuals();
 		RefreshHighlight();
+		RefreshFonts();
 	}
 
 	public override void _GuiInput(InputEvent @event)
@@ -232,5 +235,39 @@ public partial class Tile : Control
 		}
 
 		_highlightRect.Visible = true;
+	}
+
+	/// <summary>
+	/// Applies the font family and size from the texture set. Size is a fraction of the current
+	/// cell height, so this is re-run whenever the tile resizes (via the <c>Resized</c> signal).
+	/// </summary>
+	private void RefreshFonts()
+	{
+		if (!_nodesReady || _textures == null)
+		{
+			return;
+		}
+
+		float cellHeight = Size.Y;
+		ApplyFont(_valueLabel, _textures.ValueFontSize(cellHeight));
+		for (int i = 0; i < _hintLabels.Length; i++)
+		{
+			ApplyFont(_hintLabels[i], _textures.HintFontSize(cellHeight));
+		}
+	}
+
+	private void ApplyFont(Label label, int fontSize)
+	{
+		if (label == null)
+		{
+			return;
+		}
+
+		if (_textures.Font != null)
+		{
+			label.AddThemeFontOverride("font", _textures.Font);
+		}
+
+		label.AddThemeFontSizeOverride("font_size", fontSize);
 	}
 }
