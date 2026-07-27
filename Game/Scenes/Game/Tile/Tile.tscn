@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://c1tile0000001"]
 
-[ext_resource type="Script" uid="uid://b43xy815k005y" path="res://Scenes/Tile/Tile.cs" id="1_tile"]
+[ext_resource type="Script" uid="uid://b43xy815k005y" path="res://Scenes/Game/Tile/Tile.cs" id="1_tile"]
 
 [node name="Tile" type="Control" unique_id=978887148]
 custom_minimum_size = Vector2(48, 48)

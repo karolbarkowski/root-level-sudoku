@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://cnbtn00000001"]
+[gd_scene format=3 uid="uid://cnbtn00000001"]
 
-[ext_resource type="Script" path="res://Scenes/NumberButton/NumberButton.cs" id="1_nbtn"]
+[ext_resource type="Script" uid="uid://dr8qf1lado3t7" path="res://Scenes/Game/NumberButton/NumberButton.cs" id="1_nbtn"]
 
 [node name="NumberButton" type="Control"]
 custom_minimum_size = Vector2(0, 56)

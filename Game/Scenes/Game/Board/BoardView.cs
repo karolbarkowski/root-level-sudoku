@@ -36,10 +36,6 @@ public partial class BoardView : Control
 	[Export]
 	public TileTextureSet Textures { get; set; }
 
-	/// <summary>Difficulty used when generating a new game at startup.</summary>
-	[Export]
-	public SudokuGenerator.Difficulty Difficulty { get; set; } = SudokuGenerator.Difficulty.Easy;
-
 	private GridContainer _grid;
 	private ColorRect _background;
 	private MarginContainer _frame;
@@ -74,7 +70,7 @@ public partial class BoardView : Control
 		}
 		else
 		{
-			NewGame(Difficulty);
+			NewGame(GameSession.Difficulty);
 		}
 	}
 

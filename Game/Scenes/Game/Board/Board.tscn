@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://c2board000001"]
 
-[ext_resource type="Script" path="res://Scenes/Board/BoardView.cs" id="1_board"]
-[ext_resource type="PackedScene" uid="uid://c1tile0000001" path="res://Scenes/Tile/Tile.tscn" id="2_tile"]
+[ext_resource type="Script" uid="uid://n4sc7apx5j8i" path="res://Scenes/Game/Board/BoardView.cs" id="1_board"]
+[ext_resource type="PackedScene" uid="uid://c1tile0000001" path="res://Scenes/Game/Tile/Tile.tscn" id="2_tile"]
 [ext_resource type="Resource" uid="uid://c0texset00001" path="res://Resources/default_tile_textures.tres" id="3_tex"]
 
 [node name="Board" type="Control" unique_id=708808004]
