@@ -131,8 +131,9 @@ public partial class BoardView : Control
 		int col = BoardGeometry.ColOf(_selectedIndex);
 		_game.PlaceMove(row, col, value);
 
+		// Keep the cell's hints: the tile hides them while a value is present, so they simply
+		// reappear if the value is later erased or undone (rather than being lost).
 		_cells[_selectedIndex].Value = value;
-		_cells[_selectedIndex].Hints = Array.Empty<int>();
 		RefreshTile(_selectedIndex);
 		EmitSignal(SignalName.BoardChanged);
 	}
@@ -194,8 +195,7 @@ public partial class BoardView : Control
 
 		_game.PlaceMove(move.Row, move.Col, move.Value);
 		int index = BoardGeometry.Index(move.Row, move.Col);
-		_cells[index].Value = move.Value;
-		_cells[index].Hints = Array.Empty<int>();
+		_cells[index].Value = move.Value; // hints kept (hidden under the value), as in SetSelectedValue
 		_selectedIndex = index;
 
 		RenderAll();
