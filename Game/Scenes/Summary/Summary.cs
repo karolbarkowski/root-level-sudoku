@@ -19,6 +19,6 @@ public partial class Summary : Control
 
 	private void OnPlayAgain()
 	{
-		GetTree().ChangeSceneToFile("res://Scenes/Main.tscn");
+		GetTree().ChangeSceneToFile("res://Scenes/Game/Main.tscn");
 	}
 }

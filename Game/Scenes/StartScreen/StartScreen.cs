@@ -11,7 +11,7 @@ namespace SudokuEndless;
 /// </summary>
 public partial class StartScreen : Control
 {
-	private const string GameScenePath = "res://Scenes/Main.tscn";
+	private const string GameScenePath = "res://Scenes/Game/Main.tscn";
 	private const string SettingsScenePath = "res://Scenes/Settings/Settings.tscn";
 
 	public override void _Ready()
