@@ -29,6 +29,8 @@ public partial class Main : Control
 	private BoardView _board;
 	private HBoxContainer _numberBar;
 	private CheckButton _modeToggle;
+	private Button _undoButton;
+	private Button _redoButton;
 	private NumberButton[] _buttons;
 	private InputMode _mode = InputMode.Value;
 
@@ -49,18 +51,54 @@ public partial class Main : Control
 			_mode = _modeToggle.ButtonPressed ? InputMode.Hints : InputMode.Value;
 		}
 
+		_undoButton = GetNodeOrNull<Button>("%UndoButton");
+		_redoButton = GetNodeOrNull<Button>("%RedoButton");
+		if (_undoButton != null)
+		{
+			_undoButton.Pressed += OnUndo;
+		}
+
+		if (_redoButton != null)
+		{
+			_redoButton.Pressed += OnRedo;
+		}
+
 		if (_board != null)
 		{
-			_board.BoardChanged += RefreshDisabledStates;
+			_board.BoardChanged += OnBoardChanged;
 		}
 
 		BuildNumberButtons();
-		RefreshDisabledStates();
+		OnBoardChanged();
 	}
 
 	private void OnModeToggled(bool hintsOn)
 	{
 		_mode = hintsOn ? InputMode.Hints : InputMode.Value;
+	}
+
+	private void OnUndo() => _board?.Undo();
+
+	private void OnRedo() => _board?.Redo();
+
+	// Any board change can affect both the digit counts and what can be undone/redone.
+	private void OnBoardChanged()
+	{
+		RefreshDisabledStates();
+		RefreshActionButtons();
+	}
+
+	private void RefreshActionButtons()
+	{
+		if (_undoButton != null)
+		{
+			_undoButton.Disabled = !(_board?.CanUndo ?? false);
+		}
+
+		if (_redoButton != null)
+		{
+			_redoButton.Disabled = !(_board?.CanRedo ?? false);
+		}
 	}
 
 	private void BuildNumberButtons()

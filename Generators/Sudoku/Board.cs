@@ -75,12 +75,13 @@ public class Board
     public bool CanUndo => _undo is { Count: > 0 };
     public bool CanRedo => _redo is { Count: > 0 };
 
-    public void PlaceMove(Move move)
+    /// <summary>Writes <paramref name="value"/> (0 clears) at the cell and records it for undo.</summary>
+    public void PlaceMove(int row, int col, int value)
     {
-        int index = Index(move.Row, move.Col);
+        int index = Index(row, col);
         byte previous = state[index];
-        state[index] = checked((byte)move.Value);
-        (_undo ??= new()).Push(new MoveRecord(move.Row, move.Col, previous, move.Value, move.Technique));
+        state[index] = checked((byte)value);
+        (_undo ??= new()).Push(new MoveRecord(row, col, previous, value));
         _redo?.Clear();
     }
 

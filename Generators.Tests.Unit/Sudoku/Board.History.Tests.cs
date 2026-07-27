@@ -13,7 +13,7 @@ public class BoardHistoryTests
         Board board = EmptyBoard();
         board.CanUndo.ShouldBe(false);
 
-        board.PlaceMove(new Move(0, 0, 5, Technique.NakedSingle));
+        board.PlaceMove(0, 0, 5);
         board[0, 0].ShouldBe(5);
         board.CanUndo.ShouldBe(true);
         board.CanRedo.ShouldBe(false);
@@ -28,7 +28,7 @@ public class BoardHistoryTests
     public void Undo_Then_Redo_ReappliesTheMove()
     {
         Board board = EmptyBoard();
-        board.PlaceMove(new Move(3, 4, 7, Technique.NakedSingle));
+        board.PlaceMove(3, 4, 7);
         board.Undo();
 
         board.Redo().ShouldBe(true);
@@ -41,11 +41,11 @@ public class BoardHistoryTests
     public void PlaceMove_AfterUndo_ClearsTheRedoBranch()
     {
         Board board = EmptyBoard();
-        board.PlaceMove(new Move(0, 0, 5, Technique.NakedSingle));
+        board.PlaceMove(0, 0, 5);
         board.Undo();
         board.CanRedo.ShouldBe(true);
 
-        board.PlaceMove(new Move(1, 1, 3, Technique.NakedSingle));
+        board.PlaceMove(1, 1, 3);
 
         board.CanRedo.ShouldBe(false);
         board.Redo().ShouldBe(false);
@@ -67,7 +67,7 @@ public class BoardHistoryTests
         state[2, 2] = 4; // cell already holds a digit
         Board board = new(state);
 
-        board.PlaceMove(new Move(2, 2, 9, Technique.NakedSingle)); // overwrite 4 -> 9
+        board.PlaceMove(2, 2, 9); // overwrite 4 -> 9
         board[2, 2].ShouldBe(9);
 
         board.Undo();
@@ -78,15 +78,15 @@ public class BoardHistoryTests
     public void UndoAll_Then_RedoAll_ReproducesEachState()
     {
         Board board = EmptyBoard();
-        Move[] moves =
+        (int Row, int Col, int Value)[] moves =
         {
-            new(0, 0, 1, Technique.NakedSingle),
-            new(1, 1, 2, Technique.NakedSingle),
-            new(2, 2, 3, Technique.NakedSingle),
+            (0, 0, 1),
+            (1, 1, 2),
+            (2, 2, 3),
         };
 
-        foreach (Move m in moves)
-            board.PlaceMove(m);
+        foreach (var m in moves)
+            board.PlaceMove(m.Row, m.Col, m.Value);
 
         // Undo everything -> back to the empty starting state.
         while (board.Undo()) { }
@@ -96,7 +96,7 @@ public class BoardHistoryTests
 
         // Redo everything -> back to the fully-placed state.
         while (board.Redo()) { }
-        foreach (Move m in moves)
+        foreach (var m in moves)
             board[m.Row, m.Col].ShouldBe(m.Value);
     }
 }

@@ -129,9 +129,7 @@ public partial class BoardView : Control
 
 		int row = BoardGeometry.RowOf(_selectedIndex);
 		int col = BoardGeometry.ColOf(_selectedIndex);
-
-		// Technique is only meaningful for solver-suggested moves; manual entries carry a placeholder.
-		_game.PlaceMove(new Move(row, col, value, Technique.NakedSingle));
+		_game.PlaceMove(row, col, value);
 
 		_cells[_selectedIndex].Value = value;
 		_cells[_selectedIndex].Hints = Array.Empty<int>();
@@ -194,7 +192,7 @@ public partial class BoardView : Control
 			return false;
 		}
 
-		_game.PlaceMove(move);
+		_game.PlaceMove(move.Row, move.Col, move.Value);
 		int index = BoardGeometry.Index(move.Row, move.Col);
 		_cells[index].Value = move.Value;
 		_cells[index].Hints = Array.Empty<int>();

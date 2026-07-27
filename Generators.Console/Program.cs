@@ -35,7 +35,7 @@ while (true)
                 Console.WriteLine("No forced move available.");
                 continue;
             }
-            board.PlaceMove(move);
+            board.PlaceMove(move.Row, move.Col, move.Value);
             Console.WriteLine($"Placed {move.Value} at column {move.Col}, row {move.Row} ({move.Technique.ToDisplayName()} technique)");
             break;
     }
