@@ -103,6 +103,35 @@ public class Board
         return true;
     }
 
+    /// <summary>
+    /// True only when the board is a complete, valid solution: every cell filled and every row,
+    /// column, and 3x3 box contains the digits 1-9 exactly once.
+    /// </summary>
+    public bool IsSolved()
+    {
+        // Bits 1..9 set; an empty cell (0) sets bit 0, so it can never reach this exactly.
+        const int Complete = 0x3FE;
+
+        for (int unit = 0; unit < Size; unit++)
+        {
+            int rowMask = 0, colMask = 0, boxMask = 0;
+            int boxRow = unit / 3 * 3;
+            int boxCol = unit % 3 * 3;
+
+            for (int k = 0; k < Size; k++)
+            {
+                rowMask |= 1 << state[Index(unit, k)];
+                colMask |= 1 << state[Index(k, unit)];
+                boxMask |= 1 << state[Index(boxRow + k / 3, boxCol + k % 3)];
+            }
+
+            if (rowMask != Complete || colMask != Complete || boxMask != Complete)
+                return false;
+        }
+
+        return true;
+    }
+
     public int Cost()
     {
         int total = 0;

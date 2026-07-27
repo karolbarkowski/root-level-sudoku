@@ -24,6 +24,10 @@ public partial class BoardView : Control
 	[Signal]
 	public delegate void BoardChangedEventHandler();
 
+	/// <summary>Emitted once the last cell is filled and the completed board is a valid solution.</summary>
+	[Signal]
+	public delegate void SolvedEventHandler();
+
 	/// <summary>The Tile scene instanced once per cell.</summary>
 	[Export]
 	public PackedScene TileScene { get; set; }
@@ -136,6 +140,7 @@ public partial class BoardView : Control
 		_cells[_selectedIndex].Value = value;
 		RefreshTile(_selectedIndex);
 		EmitSignal(SignalName.BoardChanged);
+		CheckForCompletion();
 	}
 
 	/// <summary>
@@ -179,6 +184,7 @@ public partial class BoardView : Control
 		SyncAllValues();
 		RenderAll();
 		EmitSignal(SignalName.BoardChanged);
+		CheckForCompletion();
 		return true;
 	}
 
@@ -201,20 +207,24 @@ public partial class BoardView : Control
 		RenderAll();
 		ApplyHighlights();
 		EmitSignal(SignalName.BoardChanged);
+		CheckForCompletion();
 		return true;
 	}
 
 	/// <summary>
-	/// Provisional completion check: every cell filled and no row/column duplicates. NOTE: the
-	/// domain's Cost() does not yet validate boxes, so this is not a full solution check.
+	/// Runs the win check only when the board has just been fully filled (the last free cell), then
+	/// asks the domain board to validate the solution. Emits <see cref="Solved"/> when correct.
 	/// </summary>
-	public bool IsCompleted()
+	private void CheckForCompletion()
 	{
-		if (_game == null)
+		if (_game != null && IsFull() && _game.IsSolved())
 		{
-			return false;
+			EmitSignal(SignalName.Solved);
 		}
+	}
 
+	private bool IsFull()
+	{
 		for (int i = 0; i < BoardGeometry.CellCount; i++)
 		{
 			if (ValueAt(i) == 0)
@@ -223,7 +233,7 @@ public partial class BoardView : Control
 			}
 		}
 
-		return _game.Cost() == 0;
+		return true;
 	}
 
 	// --- Helpers ---

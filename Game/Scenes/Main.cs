@@ -26,6 +26,9 @@ public partial class Main : Control
 	[Export]
 	public PackedScene NumberButtonScene { get; set; }
 
+	/// <summary>Scene shown once the puzzle is solved.</summary>
+	private const string SummaryScenePath = "res://Scenes/Summary/Summary.tscn";
+
 	private BoardView _board;
 	private HBoxContainer _numberBar;
 	private CheckButton _modeToggle;
@@ -66,6 +69,7 @@ public partial class Main : Control
 		if (_board != null)
 		{
 			_board.BoardChanged += OnBoardChanged;
+			_board.Solved += OnSolved;
 		}
 
 		BuildNumberButtons();
@@ -80,6 +84,11 @@ public partial class Main : Control
 	private void OnUndo() => _board?.Undo();
 
 	private void OnRedo() => _board?.Redo();
+
+	private void OnSolved()
+	{
+		GetTree().ChangeSceneToFile(SummaryScenePath);
+	}
 
 	// Any board change can affect both the digit counts and what can be undone/redone.
 	private void OnBoardChanged()
