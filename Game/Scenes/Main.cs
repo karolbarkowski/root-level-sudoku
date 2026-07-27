@@ -15,7 +15,7 @@ public enum InputMode
 /// <summary>
 /// Top-level game coordinator. Builds the number-selection bar below the board, routes digit
 /// taps into the board, and keeps each button's disabled state in sync with how many of that
-/// digit are already placed (a digit is full at <see cref="BoardState.Size"/> occurrences).
+/// digit are already placed (a digit is full at <see cref="BoardGeometry.Size"/> occurrences).
 ///
 /// It mediates between the number bar and the board so neither needs to know about the other.
 /// </summary>
@@ -26,7 +26,7 @@ public partial class Main : Control
 	[Export]
 	public PackedScene NumberButtonScene { get; set; }
 
-	private Board _board;
+	private BoardView _board;
 	private HBoxContainer _numberBar;
 	private CheckButton _modeToggle;
 	private NumberButton[] _buttons;
@@ -34,7 +34,7 @@ public partial class Main : Control
 
 	public override void _Ready()
 	{
-		_board = GetNodeOrNull<Board>("%Board");
+		_board = GetNodeOrNull<BoardView>("%Board");
 		_numberBar = GetNodeOrNull<HBoxContainer>("%NumberBar");
 		if (_numberBar == null)
 		{
@@ -75,8 +75,8 @@ public partial class Main : Control
 			child.QueueFree();
 		}
 
-		_buttons = new NumberButton[BoardState.Size];
-		for (int n = 1; n <= BoardState.Size; n++)
+		_buttons = new NumberButton[BoardGeometry.Size];
+		for (int n = 1; n <= BoardGeometry.Size; n++)
 		{
 			_buttons[n - 1] = AddButton(n);
 		}
@@ -125,9 +125,9 @@ public partial class Main : Control
 		}
 
 		int[] counts = _board.GetValueCounts();
-		for (int n = 1; n <= BoardState.Size; n++)
+		for (int n = 1; n <= BoardGeometry.Size; n++)
 		{
-			_buttons[n - 1].IsDisabled = counts[n] >= BoardState.Size;
+			_buttons[n - 1].IsDisabled = counts[n] >= BoardGeometry.Size;
 		}
 	}
 }
