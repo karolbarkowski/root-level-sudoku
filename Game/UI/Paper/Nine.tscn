@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+[ext_resource type="Texture2D" path="res://Resources/Paper/nine-distressed.png" id="1"]
+[sub_resource type="CanvasItemMaterial" id="Ink"]
+blend_mode = 3
+[node name="Nine" type="TextureRect"]
+show_behind_parent = true
+material = SubResource("Ink")
+mouse_filter = 2
+texture = ExtResource("1")
+expand_mode = 1
+stretch_mode = 0

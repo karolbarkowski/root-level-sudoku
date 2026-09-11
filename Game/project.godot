@@ -18,9 +18,14 @@ config/icon="res://icon.svg"
 [display]
 
 window/size/viewport_width=540
-window/size/viewport_height=1212
+window/size/viewport_height=1220
+window/size/window_width_override=420
+window/size/window_height_override=950
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+window/handheld/orientation=1
+#Preservetheportraitcanvasinsteadofexpandingitintoahorizontallayout.window/stretch/aspect="keep"
+display/window/handheld/orientation=1
 
 [dotnet]
 
@@ -34,3 +39,4 @@ project/assembly_name="sudoku"
 
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="mobile"
+textures/vram_compression/import_etc2_astc=true

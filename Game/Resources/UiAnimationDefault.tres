@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="UiAnimationSettings" format=3]
+
+[ext_resource type="Script" path="res://Resources/UiAnimationSettings.cs" id="1_uianim"]
+
+[resource]
+script = ExtResource("1_uianim")
+Enabled = true
+SpeedScale = 1.0
+NormalModulate = Color(1, 1, 1, 1)
+HoverScale = 1.06
+HoverModulate = Color(1.12, 1.12, 1.12, 1)
+HoverInDuration = 0.12
+HoverOutDuration = 0.18
+HoverTransition = 10
+HoverEase = 1
+PressScale = 0.94
+PressModulate = Color(0.88, 0.88, 0.88, 1)
+PressDownDuration = 0.06
+PressUpDuration = 0.16
+PressTransition = 10
+PressEase = 1
+DisabledModulate = Color(1, 1, 1, 0.35)
+DisabledDuration = 0.12
+AppearFromScale = 0.9
+AppearDuration = 0.28
+AppearStagger = 0.05
+AppearFade = true
+AppearTransition = 10
+AppearEase = 1

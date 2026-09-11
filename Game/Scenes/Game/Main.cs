@@ -26,6 +26,14 @@ public partial class Main : Control
 	[Export]
 	public PackedScene NumberButtonScene { get; set; }
 
+	/// <summary>
+	/// Optional. Assign NumberSelection.tres to turn the digit buttons into a radio group, so the bar
+	/// also shows which digit was tapped last. Purely visual: input stays cell-first, and tapping the
+	/// already-selected digit still applies it.
+	/// </summary>
+	[Export]
+	public ButtonGroup NumberSelection { get; set; }
+
 	/// <summary>Scene shown once the puzzle is solved.</summary>
 	private const string SummaryScenePath = "res://Scenes/Summary/Summary.tscn";
 
@@ -137,7 +145,15 @@ public partial class Main : Control
 	{
 		var button = NumberButtonScene.Instantiate<NumberButton>();
 		button.Number = number;
-		button.Pressed += OnNumberPressed;
+		button.NumberPressed += OnNumberPressed;
+
+		// Erase stays outside the group — it is an action, not one of the choices.
+		if (NumberSelection != null && number != 0)
+		{
+			button.ToggleMode = true;
+			button.ButtonGroup = NumberSelection;
+		}
+
 		_numberBar.AddChild(button);
 		return button;
 	}
@@ -174,7 +190,7 @@ public partial class Main : Control
 		int[] counts = _board.GetValueCounts();
 		for (int n = 1; n <= BoardGeometry.Size; n++)
 		{
-			_buttons[n - 1].IsDisabled = counts[n] >= BoardGeometry.Size;
+			_buttons[n - 1].Disabled = counts[n] >= BoardGeometry.Size;
 		}
 	}
 }

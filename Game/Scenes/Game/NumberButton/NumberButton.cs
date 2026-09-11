@@ -3,30 +3,30 @@ using Godot;
 namespace SudokuEndless;
 
 /// <summary>
-/// A single digit (1-9) in the number-selection bar. For now it only displays its number and a
-/// toned-down disabled state — actual selection and board mutation are intentionally not wired up
-/// yet (a Pressed signal + input handling will be added when selection lands).
+/// A single digit (1-9) in the number-selection bar, or the erase key (0, rendered blank).
 ///
-/// It is a <see cref="Control"/> rather than a <see cref="Button"/> so <see cref="IsDisabled"/> is
-/// unambiguously ours (BaseButton already carries its own disabled concept).
+/// The root is a real <see cref="Button"/>, so press semantics, keyboard/gamepad focus,
+/// <see cref="BaseButton.Disabled"/> and optional <see cref="ButtonGroup"/> selection all come from
+/// the engine rather than being hand-rolled here. Everything visible is a child node with
+/// <c>mouse_filter = Ignore</c> so clicks fall through to the root — including the hover and press
+/// animations, which are behaviour nodes from <c>res://UI/Tweens</c> baked into the scene.
+///
+/// The only thing left for this script is the digit itself.
 /// </summary>
 [Tool]
-public partial class NumberButton : Control
+public partial class NumberButton : Button
 {
-	/// <summary>Emitted when an enabled button is tapped. Carries the digit it represents.</summary>
+	/// <summary>
+	/// Emitted when the button is activated. Carries the digit it represents; the board reads 0 as
+	/// "clear the cell". Named apart from <see cref="BaseButton.Pressed"/>, which it rides on.
+	/// </summary>
 	[Signal]
-	public delegate void PressedEventHandler(int number);
+	public delegate void NumberPressedEventHandler(int number);
 
 	private int _number = 1;
-	private bool _isDisabled;
-
 	private Label _label;
-	private bool _nodesReady;
 
-	/// <summary>
-	/// The digit this button represents (1-9), or 0 for the erase button (rendered blank). Tapping
-	/// emits this value; the board treats 0 as "clear the cell".
-	/// </summary>
+	/// <summary>The digit this button represents (1-9), or 0 for the erase button.</summary>
 	[Export(PropertyHint.Range, "0,9")]
 	public int Number
 	{
@@ -38,58 +38,20 @@ public partial class NumberButton : Control
 		}
 	}
 
-	/// <summary>
-	/// When true the button is toned down and stops receiving input. The main script sets this
-	/// once all nine of this digit are already placed on the board.
-	/// </summary>
-	[Export]
-	public bool IsDisabled
-	{
-		get => _isDisabled;
-		set
-		{
-			_isDisabled = value;
-			RefreshDisabled();
-		}
-	}
-
 	public override void _Ready()
 	{
 		_label = GetNodeOrNull<Label>("Label");
-		_nodesReady = _label != null;
 		RefreshText();
-		RefreshDisabled();
 	}
 
-	public override void _GuiInput(InputEvent @event)
-	{
-		if (_isDisabled)
-		{
-			return;
-		}
+	public override void _Pressed() => EmitSignal(SignalName.NumberPressed, _number);
 
-		bool pressed =
-			@event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } ||
-			@event is InputEventScreenTouch { Pressed: true };
-
-		if (pressed)
-		{
-			EmitSignal(SignalName.Pressed, _number);
-			AcceptEvent();
-		}
-	}
-
+	// Number is usually assigned before the node enters the tree, so this runs again from _Ready.
 	private void RefreshText()
 	{
-		if (_nodesReady)
+		if (_label != null)
 		{
 			_label.Text = _number == 0 ? string.Empty : _number.ToString();
 		}
-	}
-
-	private void RefreshDisabled()
-	{
-		Modulate = _isDisabled ? new Color(1f, 1f, 1f, 0.35f) : Colors.White;
-		MouseFilter = _isDisabled ? MouseFilterEnum.Ignore : MouseFilterEnum.Stop;
 	}
 }

@@ -1,6 +1,7 @@
 using System;
 using Godot;
 using Generators.Sudoku;
+using Sudoku;
 
 namespace SudokuEndless;
 

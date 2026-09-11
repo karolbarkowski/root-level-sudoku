@@ -30,7 +30,13 @@ color = Color(0.2, 0.2, 0.25, 1)
 
 [node name="Frame" type="MarginContainer" parent="AspectRatioContainer" unique_id=175859152]
 layout_mode = 2
+theme_override_constants/margin_left = 3
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 3
+theme_override_constants/margin_bottom = 3
 
 [node name="Grid" type="GridContainer" parent="AspectRatioContainer/Frame" unique_id=1667290759]
 layout_mode = 2
+theme_override_constants/h_separation = 3
+theme_override_constants/v_separation = 3
 columns = 3

@@ -1,6 +1,6 @@
 using Generators.Sudoku;
 
-namespace SudokuEndless;
+namespace Sudoku;
 
 /// <summary>
 /// Tiny cross-scene game state. Static so it survives a scene change (start screen → game) without

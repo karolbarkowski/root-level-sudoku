@@ -1,0 +1,6 @@
+[gd_resource type="Theme" load_steps=2 format=3]
+[ext_resource type="FontFile" path="res://Resources/fonts/Alata-Regular.ttf" id="1"]
+[resource]
+default_font = ExtResource("1")
+default_font_size = 16
+Label/colors/font_color = Color(0.16, 0.165, 0.157, 1)
