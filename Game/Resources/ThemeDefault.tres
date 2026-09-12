@@ -1,9 +1,0 @@
-[gd_resource type="Resource" script_class="GameTheme" format=3 uid="uid://dh2mgnkrast7h"]
-
-[ext_resource type="Script" uid="uid://ccaswypqf6d12" path="res://Resources/GameTheme.cs" id="1_raej5"]
-
-[resource]
-script = ExtResource("1_raej5")
-ColorBg = Color(0.9764706, 0.96862745, 0.9411765, 1)
-ColorAccent = Color(0.32941177, 0.3137255, 0.3019608, 1)
-ColorAccentShadow = Color(0, 0, 0, 1)

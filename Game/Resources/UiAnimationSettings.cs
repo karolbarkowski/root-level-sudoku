@@ -6,7 +6,7 @@ namespace Sudoku;
 /// Every tunable number the UI tween behaviours in <c>res://UI/Tweens</c> use, in one place. Change
 /// a value here and every hover, press and entrance animation in the game changes with it.
 ///
-/// Like <see cref="GameTheme"/> this is a <see cref="Resource"/> rather than an autoload, so the
+/// This is a <see cref="Resource"/> rather than an autoload, so the
 /// <c>[Tool]</c> behaviours can read it at edit time too. Authored in UiAnimationDefault.tres.
 ///
 /// A behaviour may point at a different settings resource via its <c>SettingsOverride</c> export
