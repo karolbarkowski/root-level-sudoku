@@ -1,9 +1,21 @@
 [gd_resource type="Resource" script_class="TileTextureSet" format=3 uid="uid://c0texset00001"]
 
-[ext_resource type="FontFile" uid="uid://cprw6mmnnvbq0" path="res://Resources/fonts/Carlito-Regular.ttf" id="1_l1cax"]
 [ext_resource type="Script" uid="uid://c4r0iboe36vim" path="res://Resources/TileTextureSet.cs" id="1_sgihl"]
+[ext_resource type="FontFile" path="res://Resources/fonts/Anton/Anton-Regular.ttf" id="2_anton"]
+[ext_resource type="FontFile" path="res://Resources/fonts/Alata-Regular.ttf" id="3_alata"]
 
 [resource]
 script = ExtResource("1_sgihl")
-Font = ExtResource("1_l1cax")
-ValueFontScale = 0.7
+CellGap = 1
+BoxGap = 3
+GridLineColor = Color(0.161, 0.165, 0.157, 1)
+TileColor = Color(0.933, 0.918, 0.878, 1)
+SelectedHighlightColor = Color(0.529, 0.275, 0.294, 0.3)
+PeerHighlightColor = Color(0.161, 0.165, 0.157, 0.08)
+Font = ExtResource("2_anton")
+HintFont = ExtResource("3_alata")
+ValueFontScale = 0.6
+HintFontScale = 0.22
+GivenColor = Color(0.161, 0.165, 0.157, 1)
+PlayerColor = Color(0.529, 0.275, 0.294, 1)
+HintColor = Color(0.467, 0.467, 0.439, 1)

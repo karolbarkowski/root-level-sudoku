@@ -37,9 +37,12 @@ public partial class Main : Control
 	/// <summary>Scene shown once the puzzle is solved.</summary>
 	private const string SummaryScenePath = "res://Scenes/Summary/Summary.tscn";
 
+	/// <summary>Side inset of the sheet, matching the margins set on the Sheet container.</summary>
+	private const float SheetMargin = 32;
+
 	private BoardView _board;
 	private HBoxContainer _numberBar;
-	private CheckButton _modeToggle;
+	private PaperButton _modeToggle;
 	private Button _undoButton;
 	private Button _redoButton;
 	private NumberButton[] _buttons;
@@ -48,6 +51,9 @@ public partial class Main : Control
 	public override void _Ready()
 	{
 		_board = GetNodeOrNull<BoardView>("%Board");
+		Resized += Layout;
+		Layout();
+
 		_numberBar = GetNodeOrNull<HBoxContainer>("%NumberBar");
 		if (_numberBar == null)
 		{
@@ -55,7 +61,7 @@ public partial class Main : Control
 			return;
 		}
 
-		_modeToggle = GetNodeOrNull<CheckButton>("%ModeToggle");
+		_modeToggle = GetNodeOrNull<PaperButton>("%ModeToggle");
 		if (_modeToggle != null)
 		{
 			_modeToggle.Toggled += OnModeToggled;
@@ -83,6 +89,21 @@ public partial class Main : Control
 		BuildNumberButtons();
 		OnBoardChanged();
 	}
+
+	/// <summary>
+	/// The board is square, but as a plain Control it reports no minimum, so left to expand it would
+	/// float centred in whatever height is left over. Pin its height to the sheet's width instead and
+	/// let the spacer below it take the slack, which seats the grid at the top of the sheet.
+	/// </summary>
+	private void Layout()
+	{
+		if (_board != null)
+		{
+			_board.CustomMinimumSize = new Vector2(0, Mathf.Max(0, Size.X - (SheetMargin * 2)));
+		}
+	}
+
+	public override void _ExitTree() => Resized -= Layout;
 
 	private void OnModeToggled(bool hintsOn)
 	{
@@ -191,6 +212,8 @@ public partial class Main : Control
 		for (int n = 1; n <= BoardGeometry.Size; n++)
 		{
 			_buttons[n - 1].Disabled = counts[n] >= BoardGeometry.Size;
+			// Disabled has no change signal, and the key draws itself.
+			_buttons[n - 1].RefreshAvailability();
 		}
 	}
 }

@@ -129,14 +129,7 @@ public partial class PaperButton : Button
         if (HasFocus() && !_touchInput) DrawRect(rect.Grow(-5), PaperStyle.Paper.Lerp(PaperStyle.Burgundy, 1 - h), false, 1);
     }
 
-    private void Border(Rect2 rect, Color color)
-    {
-        const float thickness = 1.5f;
-        DrawRect(new Rect2(rect.Position, new Vector2(rect.Size.X, thickness)), color);
-        DrawRect(new Rect2(rect.Position + new Vector2(0, rect.Size.Y - thickness), new Vector2(rect.Size.X, thickness)), color);
-        DrawRect(new Rect2(rect.Position, new Vector2(thickness, rect.Size.Y)), color);
-        DrawRect(new Rect2(rect.Position + new Vector2(rect.Size.X - thickness, 0), new Vector2(thickness, rect.Size.Y)), color);
-    }
+    private void Border(Rect2 rect, Color color) => PaperStyle.DrawBorder(this, rect, color);
 
     private void DrawIcon(Vector2 center, Color color)
     {

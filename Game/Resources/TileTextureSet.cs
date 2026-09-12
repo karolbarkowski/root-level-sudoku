@@ -56,9 +56,17 @@ public partial class TileTextureSet : Resource
 
 	[ExportGroup("Font")]
 
-	/// <summary>Typeface for the value digit and pencil marks. Null falls back to the theme font.</summary>
+	/// <summary>Typeface for the value digit. Null falls back to the theme font.</summary>
 	[Export]
 	public Font Font { get; set; }
+
+	/// <summary>
+	/// Typeface for pencil marks. A display face set for the big digits is usually too condensed to
+	/// stay readable at a third of the cell, so hints get their own. Null falls back to
+	/// <see cref="Font"/>.
+	/// </summary>
+	[Export]
+	public Font HintFont { get; set; }
 
 	/// <summary>Value digit height as a fraction of the cell's height (0.6 = 60% of the cell).</summary>
 	[Export(PropertyHint.Range, "0.05,1.0,0.01")]

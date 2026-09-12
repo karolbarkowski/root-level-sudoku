@@ -254,23 +254,24 @@ public partial class Tile : Control
 		}
 
 		float cellHeight = Size.Y;
-		ApplyFont(_valueLabel, _textures.ValueFontSize(cellHeight));
+		ApplyFont(_valueLabel, _textures.Font, _textures.ValueFontSize(cellHeight));
+		Font hintFont = _textures.HintFont ?? _textures.Font;
 		for (int i = 0; i < _hintLabels.Length; i++)
 		{
-			ApplyFont(_hintLabels[i], _textures.HintFontSize(cellHeight));
+			ApplyFont(_hintLabels[i], hintFont, _textures.HintFontSize(cellHeight));
 		}
 	}
 
-	private void ApplyFont(Label label, int fontSize)
+	private static void ApplyFont(Label label, Font font, int fontSize)
 	{
 		if (label == null)
 		{
 			return;
 		}
 
-		if (_textures.Font != null)
+		if (font != null)
 		{
-			label.AddThemeFontOverride("font", _textures.Font);
+			label.AddThemeFontOverride("font", font);
 		}
 
 		label.AddThemeFontSizeOverride("font_size", fontSize);
