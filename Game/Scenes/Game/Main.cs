@@ -41,6 +41,8 @@ public partial class Main : Control
 	private const float SheetMargin = 32;
 
 	private BoardView _board;
+	private Control _background;
+	private Control _sheet;
 	private HBoxContainer _numberBar;
 	private PaperButton _modeToggle;
 	private Button _undoButton;
@@ -50,6 +52,8 @@ public partial class Main : Control
 
 	public override void _Ready()
 	{
+		_background = GetNodeOrNull<Control>("PaperBackground");
+		_sheet = GetNodeOrNull<Control>("%Sheet");
 		_board = GetNodeOrNull<BoardView>("%Board");
 		Resized += Layout;
 		Layout();
@@ -91,12 +95,28 @@ public partial class Main : Control
 	}
 
 	/// <summary>
+	/// The sheet and its paper are sized here rather than by their own full-rect anchors: on Android
+	/// those resolve to 0x0 against this root and the screen collapses to the bare clear colour. Same
+	/// fix as StartScreen. Godot warns that anchors override this — they do not, they never run.
+	///
 	/// The board is square, but as a plain Control it reports no minimum, so left to expand it would
 	/// float centred in whatever height is left over. Pin its height to the sheet's width instead and
 	/// let the spacer below it take the slack, which seats the grid at the top of the sheet.
 	/// </summary>
 	private void Layout()
 	{
+		if (_background != null)
+		{
+			_background.Position = Vector2.Zero;
+			_background.Size = Size;
+		}
+
+		if (_sheet != null)
+		{
+			_sheet.Position = Vector2.Zero;
+			_sheet.Size = Size;
+		}
+
 		if (_board != null)
 		{
 			_board.CustomMinimumSize = new Vector2(0, Mathf.Max(0, Size.X - (SheetMargin * 2)));
