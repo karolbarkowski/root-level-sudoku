@@ -31,21 +31,32 @@ public partial class PaperButton : Button
         Animate();
     }
 
+    /// <summary>How far below its resting place the button starts. Small on purpose — a nudge, not a fly-in.</summary>
+    private const float EntryRise = 26;
+
     public void PrepareEntrance()
     {
         _entry?.Kill();
-        _entryOffset = 22;
+        _entryOffset = EntryRise;
         _entryScale = .96f;
         QueueRedraw();
     }
 
-    public void PlayEntrance(double delay)
+    /// <summary>Rises into place. The caller owns the stagger; this only knows its own slot.</summary>
+    public void PlayEntrance(double delay, double duration)
     {
-        if (!UiAnimationSettings.Default.Enabled) return;
+        if (!UiAnimationSettings.Default.Enabled)
+        {
+            // Still land at rest: a prepared button would otherwise stay parked below the line.
+            _entryOffset = 0;
+            _entryScale = 1;
+            QueueRedraw();
+            return;
+        }
         PrepareEntrance();
         _entry = CreateTween().SetParallel().SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
-        _entry.TweenMethod(Callable.From<float>(v => { _entryOffset = v; QueueRedraw(); }), 22f, 0f, .21).SetDelay(delay);
-        _entry.TweenMethod(Callable.From<float>(v => { _entryScale = v; QueueRedraw(); }), .96f, 1f, .21).SetDelay(delay);
+        _entry.TweenMethod(Callable.From<float>(v => { _entryOffset = v; QueueRedraw(); }), EntryRise, 0f, duration).SetDelay(delay);
+        _entry.TweenMethod(Callable.From<float>(v => { _entryScale = v; QueueRedraw(); }), .96f, 1f, duration).SetDelay(delay);
     }
 
     public override void _Ready()

@@ -42,7 +42,7 @@ asset is used in the game. The former procedural shaders are removed.
 
 Build the C# project, then run:
 
-    Godot_v4.7.1.exe --path Game --script res://Tests/paper_preview.gd
+	Godot_v4.7.1.exe --path Game --script res://Tests/paper_preview.gd
 
 The graphical smoke check creates output/start-screen and saves previews at five
 portrait sizes, including 280 x 640 and 746 x 1311. It checks neutral Easy focus, vertical
@@ -52,4 +52,3 @@ mouse click on Easy producing an unfinished puzzle. Physical device touch and
 notch/safe-area behavior still require testing on an exported mobile build.
 
 To inspect the entry itself, run with --fixed-fps 60 --script res://Tests/paper_entry.gd. This checks the initial prepared frame, visible intermediate motion and stagger, final resting state, replay on re-entry, and disabled-motion behavior. Captured frames are saved under output/start-screen/entry.
-

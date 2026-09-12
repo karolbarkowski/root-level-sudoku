@@ -1,36 +1,38 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://cxvw3t35gbn1"]
+
 [ext_resource type="PackedScene" path="res://UI/Paper/PaperFooter.tscn" id="1"]
-[node name="Menu" type="VBoxContainer"]
+
+[node name="Menu" type="VBoxContainer" unique_id=451894929]
 theme_override_constants/separation = 12
-[node name="Heading" type="HBoxContainer" parent="."]
+
+[node name="Heading" type="HBoxContainer" parent="." unique_id=728544578]
 layout_mode = 2
 theme_override_constants/separation = 12
-[node name="Left" type="HSeparator" parent="Heading"]
+
+[node name="Left" type="HSeparator" parent="Heading" unique_id=1586272683]
 layout_mode = 2
 size_flags_horizontal = 3
-[node name="Caption" type="Label" parent="Heading"]
+
+[node name="Caption" type="Label" parent="Heading" unique_id=2142085948]
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "CHOOSE YOUR DIFFICULTY"
-[node name="Right" type="HSeparator" parent="Heading"]
+
+[node name="Right" type="HSeparator" parent="Heading" unique_id=570279275]
 layout_mode = 2
 size_flags_horizontal = 3
-[node name="Difficulties" type="VBoxContainer" parent="."]
+
+[node name="Difficulties" type="VBoxContainer" parent="." unique_id=791792524]
 layout_mode = 2
 theme_override_constants/separation = 8
-[node name="Hint" type="Label" parent="."]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.46, 0.46, 0.44, 1)
-theme_override_font_sizes/font_size = 14
-text = "Pick a level to start a new puzzle."
-horizontal_alignment = 1
-[node name="Space" type="Control" parent="."]
+
+[node name="Space" type="Control" parent="." unique_id=435866479]
+custom_minimum_size = Vector2(0, 12)
 layout_mode = 2
 size_flags_vertical = 3
-custom_minimum_size = Vector2(0, 12)
-[node name="Rule" type="HSeparator" parent="."]
+
+[node name="Rule" type="HSeparator" parent="." unique_id=713372642]
 layout_mode = 2
-[node name="Footer" parent="." instance=ExtResource("1")]
-layout_mode = 2
-[node name="BottomRule" type="HSeparator" parent="."]
+
+[node name="Footer" parent="." unique_id=459429508 instance=ExtResource("1")]
 layout_mode = 2
