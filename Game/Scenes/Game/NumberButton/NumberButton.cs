@@ -43,7 +43,7 @@ public partial class NumberButton : Button
 				return;
 			}
 			_selectionTween = CreateTween().SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
-			_selectionTween.TweenMethod(Callable.From<float>(v => { _selection = v; QueueRedraw(); }), _selection, target, .22);
+			_selectionTween.TweenMethod(Callable.From<float>(v => { _selection = v; QueueRedraw(); }), _selection, target, .12);
 		}
 	}
 	private readonly StyleBoxFlat _plate = new() { CornerRadiusTopLeft = 8, CornerRadiusTopRight = 8, CornerRadiusBottomLeft = 3, CornerRadiusBottomRight = 3 };
@@ -132,7 +132,7 @@ public partial class NumberButton : Button
 		Color foreground = PaperStyle.Ink;
 		if (Disabled) foreground = foreground with { A = .3f };
 		float inset = _depression * 2;
-		float top = Size.Y * .22f * (1 - _selection);
+		float top = Size.Y * .12f * (1 - _selection);
 		DrawSetTransform(new Vector2(0, top));
 		var rect = new Rect2(new Vector2(inset, inset + _depression), Size - new Vector2(0,top) - (Vector2.One * inset * 2));
 
