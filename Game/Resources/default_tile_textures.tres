@@ -6,16 +6,16 @@
 
 [resource]
 script = ExtResource("1_sgihl")
-CellGap = 2
-BoxGap = 4
-GridLineColor = Color(0.161, 0.165, 0.157, 1)
-TileColor = Color(0.973, 0.961, 0.933, 1)
-SelectedHighlightColor = Color(0.502, 0.212, 0.243, 0.25)
-PeerHighlightColor = Color(0.502, 0.212, 0.243, 0.06)
+CellGap = 1
+BoxGap = 2
+GridLineColor = Color(0.961, 0.51, 0.125, 0.8)
+TileColor = Color(0.153, 0.184, 0.2, 1)
+SelectedHighlightColor = Color(0.961, 0.51, 0.125, 0.8)
+PeerHighlightColor = Color(0.961, 0.51, 0.125, 0.08)
 Font = ExtResource("3_alata")
 HintFont = ExtResource("3_alata")
 ValueFontScale = 0.6
 HintFontScale = 0.22
-GivenColor = Color(0.161, 0.165, 0.157, 1)
-PlayerColor = Color(0.502, 0.212, 0.243, 1)
-HintColor = Color(0.467, 0.467, 0.439, 1)
+GivenColor = Color(0.957, 0.961, 0.961, 1)
+PlayerColor = Color(0.961, 0.51, 0.125, 1)
+HintColor = Color(0.78, 0.81, 0.82, 1)

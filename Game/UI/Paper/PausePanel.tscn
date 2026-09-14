@@ -4,7 +4,7 @@
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.933, 0.918, 0.878, 1)
+color = Color(0.153, 0.184, 0.2, 1)
 [node name="Title" type="Label" parent="."]
 offset_top = 165.0
 offset_right = 476.0

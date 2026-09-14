@@ -46,14 +46,16 @@ public partial class PaperIconButton : Button
     public override void _Draw()
     {
         bool active = Accent || ButtonPressed;
-        var center = new Vector2(Size.X / 2, 30 + _feedback * 2);
-        Color fill = active ? PaperStyle.Burgundy : PaperStyle.Paper.Darkened(.08f);
+        var center = new Vector2(Size.X / 2, Size.Y / 2 + _feedback * 2);
+        float radius = Mathf.Min(Size.X, Size.Y) / 2 - 5;
+        float glyphScale = Caption.Length > 0 ? 1.45f : 1.15f;
+        Color fill = active ? PaperStyle.Burgundy : PaperStyle.Surface;
         fill = fill.Lerp(PaperStyle.Ink, _feedback * .22f);
-        Color ink = active ? PaperStyle.Paper : PaperStyle.Ink;
+        Color ink = PaperStyle.Ink;
         if (Disabled) { fill.A = .45f; ink.A = .3f; }
-        DrawCircle(center, 27 - _feedback, fill);
-        if (HasFocus() && !_touch) DrawArc(center, 30, 0, Mathf.Tau, 48, PaperStyle.Burgundy, 2, true);
-        DrawSetTransform(center, 0, Vector2.One);
+        DrawCircle(center, radius - _feedback, fill);
+        if (HasFocus() && !_touch) DrawArc(center, radius + 3, 0, Mathf.Tau, 48, PaperStyle.Burgundy, 2, true);
+        DrawSetTransform(center, 0, Vector2.One * glyphScale);
         void Line(Vector2 a, Vector2 b) => DrawLine(a, b, ink, 2.2f, true);
         if (Symbol == Glyph.Back) {
             Line(new(-10,0), new(11,0)); Line(new(-10,0),new(-2,-8)); Line(new(-10,0),new(-2,8));
@@ -63,7 +65,7 @@ public partial class PaperIconButton : Button
             DrawColoredPolygon(new[] { new Vector2(-6,-10), new Vector2(10,0), new Vector2(-6,10) }, ink);
         } else if (Symbol == Glyph.Undo || Symbol == Glyph.Redo) {
             float d = Symbol == Glyph.Undo ? 1 : -1;
-            DrawSetTransform(center, 0, new Vector2(d,1));
+            DrawSetTransform(center, 0, new Vector2(d,1) * glyphScale);
             DrawArc(new Vector2(0,3), 10, -Mathf.Pi/2, Mathf.Pi/2, 24, ink, 2.2f, true);
             Line(new(0,-7),new(-11,-7));
             Line(new(-11,-7),new(-5,-13)); Line(new(-11,-7),new(-5,-1));
@@ -75,9 +77,5 @@ public partial class PaperIconButton : Button
             Line(new(3,-8),new(9,-2));
         }
         DrawSetTransform(Vector2.Zero);
-        if (Caption.Length > 0) {
-            float width = PaperStyle.Body.GetStringSize(Caption,fontSize:14).X;
-            DrawString(PaperStyle.Body, new Vector2((Size.X-width)/2,80), Caption,fontSize:14,modulate:Disabled ? PaperStyle.Muted : PaperStyle.Ink);
-        }
     }
 }

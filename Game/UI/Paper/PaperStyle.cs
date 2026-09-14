@@ -2,13 +2,14 @@ using Godot;
 
 namespace SudokuEndless;
 
-/// <summary>Shared print palette and bundled, redistributable typography.</summary>
+/// <summary>Shared charcoal/orange palette. Legacy names preserve existing scene references.</summary>
 public static class PaperStyle
 {
-    public static readonly Color Ink = new("292a28");
-    public static readonly Color Paper = new("eeeae0");
-    public static readonly Color Burgundy = new("80363E");
-    public static readonly Color Muted = new("777770");
+    public static readonly Color Ink = new("F4F5F5");
+    public static readonly Color Paper = new("272F33");
+    public static readonly Color Burgundy = new("F58220");
+    public static readonly Color Muted = new("A4ADB1");
+    public static readonly Color Surface = new("41494D");
 
     private static Font _display;
     private static Font _body;

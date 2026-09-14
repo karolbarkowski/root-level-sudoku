@@ -22,6 +22,7 @@ public partial class PaperButton : Button
     private float _entryOffset;
     private float _entryScale = 1;
     private bool _touchInput;
+    private readonly StyleBoxFlat _surface = new() { CornerRadiusTopLeft = 14, CornerRadiusTopRight = 14, CornerRadiusBottomLeft = 14, CornerRadiusBottomRight = 14 };
 
     public override void _Input(InputEvent input)
     {
@@ -102,27 +103,25 @@ public partial class PaperButton : Button
     {
         DrawSetTransform(Size * (1 - _entryScale) / 2 + new Vector2(0, _entryOffset), 0, Vector2.One * _entryScale);
         float h = Disabled ? 0 : _highlight;
-        Color foreground = Accent ? PaperStyle.Paper : PaperStyle.Ink.Lerp(PaperStyle.Paper, h);
+        Color foreground = PaperStyle.Ink;
         if (Disabled) foreground = foreground with { A = .35f };
         float inset = _depression * 2;
         var rect = new Rect2(new Vector2(inset, inset + _depression), Size - Vector2.One * inset * 2);
-        DrawRect(rect, Accent ? PaperStyle.Burgundy.Lerp(PaperStyle.Ink, h * .3f) : PaperStyle.Ink with { A = h });
-        Border(rect, (Accent ? PaperStyle.Burgundy : PaperStyle.Ink) with { A = Disabled ? .3f : 1 });
+        _surface.BgColor = Accent ? PaperStyle.Burgundy.Lightened(h * .12f) : PaperStyle.Surface.Lerp(PaperStyle.Burgundy, h);
+        DrawStyleBox(_surface, rect);
         float baseline = Size.Y / 2 + (Secondary ? 9 : 12) + _depression;
         if (Secondary)
         {
-            float width = PaperStyle.Display.GetStringSize(Caption, fontSize: CaptionSize).X;
+            float width = PaperStyle.Body.GetStringSize(Caption, fontSize: CaptionSize).X;
             float extra = Symbol == PaperIcon.None ? 0 : 34;
             float left = (Size.X - width - extra) / 2;
-            DrawString(PaperStyle.Display, new Vector2(left + extra, baseline), Caption, fontSize: CaptionSize, modulate: foreground);
+            DrawString(PaperStyle.Body, new Vector2(left + extra, baseline), Caption, fontSize: CaptionSize, modulate: foreground);
             if (Symbol != PaperIcon.None) DrawIcon(new Vector2(left + 11, Size.Y / 2 + _depression), foreground);
         }
         else
         {
-            DrawRect(new Rect2(rect.Position, new Vector2(60, rect.Size.Y)), PaperStyle.Burgundy with { A = .10f + h * .90f });
-            DrawLine(new Vector2(60, inset), new Vector2(60, Size.Y - inset), PaperStyle.Ink with { A = 1 - h }, 1);
-            DrawString(PaperStyle.Display, new Vector2(20, baseline - 3), Index, fontSize: 22, modulate: PaperStyle.Burgundy.Lerp(PaperStyle.Paper, h));
-            DrawString(PaperStyle.Display, new Vector2(78, baseline), Caption, fontSize: 31, modulate: foreground);
+            DrawString(PaperStyle.Body, new Vector2(20, baseline - 3), Index, fontSize: 20, modulate: PaperStyle.Burgundy.Lerp(PaperStyle.Ink, h));
+            DrawString(PaperStyle.Body, new Vector2(78, baseline), Caption, fontSize: 31, modulate: foreground);
             float x = Size.X - 31 + h * 3 - inset;
             float y = Size.Y / 2 + _depression;
             DrawLine(new Vector2(x - 23, y), new Vector2(x, y), foreground, 1.6f, true);

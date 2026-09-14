@@ -190,7 +190,7 @@ public partial class Tile : Control
 			if (_textures != null)
 			{
 				_valueLabel.AddThemeColorOverride(
-					"font_color", isGiven ? _textures.GivenColor : _textures.PlayerColor);
+					"font_color", _highlight == TileHighlight.Selected || isGiven ? _textures.GivenColor : _textures.PlayerColor);
 			}
 		}
 		else
@@ -213,13 +213,14 @@ public partial class Tile : Control
 			label.Text = present ? (i + 1).ToString() : string.Empty;
 			if (present && _textures != null)
 			{
-				label.AddThemeColorOverride("font_color", _textures.HintColor);
+				label.AddThemeColorOverride("font_color", _highlight == TileHighlight.Selected ? _textures.GivenColor : _textures.HintColor);
 			}
 		}
 	}
 
 	private void RefreshHighlight()
 	{
+		RefreshVisuals();
 		if (!_nodesReady || _highlightRect == null)
 		{
 			return;

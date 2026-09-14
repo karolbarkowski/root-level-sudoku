@@ -400,6 +400,8 @@ public partial class BoardView : Control
 		};
 		box.AddThemeConstantOverride("h_separation", cellGap);
 		box.AddThemeConstantOverride("v_separation", cellGap);
+		box.Draw += () => box.DrawRect(new Rect2(Vector2.Zero, box.Size), new Color("596267"));
+		box.Resized += box.QueueRedraw;
 		return box;
 	}
 

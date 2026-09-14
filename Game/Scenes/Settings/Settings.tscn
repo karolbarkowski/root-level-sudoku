@@ -1,6 +1,10 @@
-[gd_scene load_steps=2 format=3 uid="uid://csettings00001"]
+[gd_scene load_steps=5 format=3 uid="uid://csettings00001"]
 
 [ext_resource type="Script" path="res://Scenes/Settings/Settings.cs" id="1_set"]
+
+[ext_resource type="Theme" path="res://UI/Paper/PaperTheme.tres" id="2_theme"]
+[ext_resource type="PackedScene" path="res://UI/Paper/PaperBackground.tscn" id="3_bg"]
+[ext_resource type="PackedScene" path="res://UI/Paper/PaperButton.tscn" id="4_button"]
 
 [node name="Settings" type="Control"]
 layout_mode = 3
@@ -9,7 +13,10 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("2_theme")
 script = ExtResource("1_set")
+
+[node name="Background" parent="." instance=ExtResource("3_bg")]
 
 [node name="CenterContainer" type="CenterContainer" parent="."]
 layout_mode = 1
@@ -29,8 +36,10 @@ theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 text = "Settings"
 
-[node name="BackButton" type="Button" parent="CenterContainer/VBoxContainer"]
+[node name="BackButton" parent="CenterContainer/VBoxContainer" instance=ExtResource("4_button")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(220, 44)
 layout_mode = 2
-text = "Back"
+Caption = "Back"
+Secondary = true
+Accent = true

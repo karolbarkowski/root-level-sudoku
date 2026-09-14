@@ -129,16 +129,15 @@ public partial class NumberButton : Button
 	public override void _Draw()
 	{
 		float h = Disabled ? 0 : Mathf.Lerp(_selection, 1, _highlight * .12f);
-		Color foreground = PaperStyle.Ink.Lerp(PaperStyle.Paper, h);
+		Color foreground = PaperStyle.Ink;
 		if (Disabled) foreground = foreground with { A = .3f };
 		float inset = _depression * 2;
 		float top = Size.Y * .22f * (1 - _selection);
 		DrawSetTransform(new Vector2(0, top));
 		var rect = new Rect2(new Vector2(inset, inset + _depression), Size - new Vector2(0,top) - (Vector2.One * inset * 2));
 
-		_plate.BgColor = PaperStyle.Paper.Darkened(.06f).Lerp(PaperStyle.Burgundy, h);
+		_plate.BgColor = PaperStyle.Surface.Lerp(PaperStyle.Burgundy, h);
 		DrawStyleBox(_plate, rect);
-		DrawRect(new Rect2(rect.Position + new Vector2(0,rect.Size.Y-3),new Vector2(rect.Size.X,3)), PaperStyle.Burgundy with { A = Disabled ? .15f : .65f });
 
 		if (_number == 0)
 		{

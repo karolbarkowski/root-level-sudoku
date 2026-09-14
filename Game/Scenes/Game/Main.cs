@@ -102,6 +102,8 @@ public partial class Main : Control
     {
         if (!Engine.IsEditorHint()) GameSession.NotesMode = enabled;
         _notes.Caption = enabled ? "Notes ON" : "Notes OFF";
+        _notes.AccessibilityName = _notes.Caption;
+        _notes.TooltipText = _notes.Caption;
         _notes.Accent = enabled;
         _notes.QueueRedraw();
         Refresh();

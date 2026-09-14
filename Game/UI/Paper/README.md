@@ -1,54 +1,40 @@
-# Paper start screen
+# Dark vector UI
 
-Open Scenes/StartScreen/StartScreen.tscn and run the scene (F6).
+The existing Paper scene and class names are retained for compatibility. Active screens
+use flat vector surfaces; the old paper and numeral textures are no longer rendered.
 
-The composition follows one 540 x 1220 vertical poster at supported portrait sizes.
-The hero occupies approximately the upper half; hero and menu scale together,
-so resizing cannot shrink only the title. The project is portrait-only, including
-the Android orientation setting. A standalone window starts at 420 x 950 and
-permits sizes down to 280 x 480. Godot editor embedded-game dock chrome has its
-own minimum size; use a standalone window to test very narrow portrait widths.
+## Palette
+- Background: #272F33
+- Raised controls: #41494D
+- Accent: #F58220
+- Text: #F4F5F5
+- Muted text: #A4ADB1
 
-## Reusable components
+PaperStyle.cs owns the shared palette; PaperTheme.tres supplies the bundled Alata font.
+Anton remains the start-screen title font. Board colors are editable in
+Resources/default_tile_textures.tres.
 
-- PaperBackground.tscn: Resources/Paper/paper-background.png, full-window image.
-- PaperHero.tscn: live header, title and subtitle over an independent Nine.tscn.
-- Nine.tscn: Resources/Paper/nine-distressed.png. The image contains the entire
-  numeral with top padding. Standard CanvasItemMaterial multiply blending lets
-  the paper show through the white printing plate. There is no custom shader.
-- PaperMenu.tscn: difficulty list, heading, hint and footer containers.
-- PaperFooter.tscn: two reusable PaperButton instances.
-- PaperButton.tscn: native Button; exported Caption, Index, Secondary and Symbol.
-  Connect its normal Pressed signal. All buttons start neutral; keyboard focus,
-  pointer hover and touch press retain their animated feedback.
-- PaperStyle.cs / PaperTheme.tres: shared palette and typography. Anton is bundled
-  with its OFL license and approximates the generated concept's lettering.
-- StartScreen.cs: composition, enum-driven buttons and navigation only.
+## Components
+- PaperBackground.tscn: full-screen flat ColorRect.
+- PaperHero.tscn: animated live title and subtitle.
+- PaperMenu.tscn / PaperFooter.tscn: difficulty and navigation composition.
+- PaperButton.tscn: reusable rounded text button, including the continue action.
+- PaperIconButton.tscn: reusable animated back, pause, undo, redo, erase and notes icons.
+- PausePanel.tscn: opaque puzzle cover with Resume.
+- NumberButton.tscn: bottom-aligned digit bar with remaining count; selection animates
+  height and orange fill over 220 ms. Disabled animation settings apply immediately.
 
-Entry is prepared before drawing, then starts after the first rendered frame so startup loading cannot consume the animation. The title and numeral settle from opposite directions over 280 ms. Buttons fade, rise 22 logical pixels, and scale from 96% over 210 ms with up to 68 ms stagger. The complete sequence finishes in 280 ms.
-Hover/focus takes 100 ms; press takes 60 ms; release takes 100 ms.
-UiAnimationSettings.Default.Enabled disables these animations. Entry and
-interaction tweens do not write the same properties.
-
-## Asset provenance
-
-PNG assets were generated with the built-in image generation tool using the
-approved concept as a reference. The full prompts are in Resources/Paper/prompts.md.
-The numeral uses white-background multiply compositing because the generator's
-transparent-background attempt produced an opaque checkerboard. No checkerboard
-asset is used in the game. The former procedural shaders are removed.
+The portrait game places navigation at the top and the number strip at the bottom,
+with the board centered in between. Entry animations finish within one second.
+GameSession retains the live puzzle and value-move history across scene changes;
+it does not persist across application restarts.
 
 ## Verification
+Build Game/sudoku.csproj, then run Godot with --path Game and one of:
+- --script res://Tests/game_flow.gd
+- --script res://Tests/paper_preview.gd
+- --script res://Tests/paper_entry.gd
 
-Build the C# project, then run:
-
-	Godot_v4.7.1.exe --path Game --script res://Tests/paper_preview.gd
-
-The graphical smoke check creates output/start-screen and saves previews at five
-portrait sizes, including 280 x 640 and 746 x 1311. It checks neutral Easy focus, vertical
-ordering, shared scaling, visible top of the numeral, image-based assets, layout
-bounds, completed entry opacity, Settings and Back keyboard navigation, and a
-mouse click on Easy producing an unfinished puzzle. Physical device touch and
-notch/safe-area behavior still require testing on an exported mobile build.
-
-To inspect the entry itself, run with --fixed-fps 60 --script res://Tests/paper_entry.gd. This checks the initial prepared frame, visible intermediate motion and stagger, final resting state, replay on re-entry, and disabled-motion behavior. Captured frames are saved under output/start-screen/entry.
+Captures are written under output/. Checks cover portrait sizes, selection animation,
+bottom alignment, pause, remaining counts, menu/continue, notes, undo/redo, and
+new-game/completion behavior. Physical Android touch and safe areas require device testing.
