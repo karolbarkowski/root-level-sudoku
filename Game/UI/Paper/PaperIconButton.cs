@@ -8,6 +8,7 @@ public partial class PaperIconButton : Button
 {
 	public enum Glyph { Back, Pause, Play, Undo, Redo, Erase, Edit }
 	[Export] public Glyph Symbol { get; set; }
+	[Export] public Texture2D SvgIcon { get; set; }
 	[Export] public string Caption { get; set; } = "";
 	[Export] public bool Accent { get; set; }
 	private float _feedback;
@@ -57,8 +58,8 @@ public partial class PaperIconButton : Button
 		if (HasFocus() && !_touch) DrawArc(center, radius + 3, 0, Mathf.Tau, 48, PaperStyle.Burgundy, 2, true);
 		DrawSetTransform(center, 0, Vector2.One * glyphScale);
 		void Line(Vector2 a, Vector2 b) => DrawLine(a, b, ink, 2.2f, true);
-		if (Icon != null) {
-			DrawTextureRect(Icon, new Rect2(-14, -14, 28, 28), false, ink);
+		if (SvgIcon != null) {
+			DrawTextureRect(SvgIcon, new Rect2(-14, -14, 28, 28), false, ink);
 		} else if (Symbol == Glyph.Back) {
 			Line(new(-10,0), new(11,0)); Line(new(-10,0),new(-2,-8)); Line(new(-10,0),new(-2,8));
 		} else if (Symbol == Glyph.Pause) {
