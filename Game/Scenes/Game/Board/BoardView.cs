@@ -71,7 +71,15 @@ public partial class BoardView : Control
 		}
 		else
 		{
-			NewGame(GameSession.Difficulty);
+			if (GameSession.HasPuzzle)
+			{
+				_game = GameSession.ActiveBoard;
+				Array.Copy(GameSession.Cells, _cells, _cells.Length);
+				_selectedIndex = GameSession.SelectedIndex;
+				RenderAll();
+				ApplyHighlights();
+			}
+			else NewGame(GameSession.Difficulty);
 		}
 	}
 
@@ -94,6 +102,10 @@ public partial class BoardView : Control
 
 		RenderAll();
 		ApplyHighlights();
+		GameSession.Difficulty = difficulty;
+		GameSession.ActiveBoard = _game;
+		GameSession.Cells = (CellData[])_cells.Clone();
+		GameSession.SelectedIndex = -1;
 	}
 
 	/// <summary>Counts of each digit (1-9) currently on the board, indexed by value.</summary>
@@ -123,7 +135,7 @@ public partial class BoardView : Control
 	/// </summary>
 	public void SetSelectedValue(int value)
 	{
-		if (!CanEditSelection())
+		if (!CanEditSelection() || value < 0 || value > 9 || ValueAt(_selectedIndex) == value)
 		{
 			return;
 		}
@@ -152,6 +164,16 @@ public partial class BoardView : Control
 		}
 
 		_cells[_selectedIndex].ToggleHint(n);
+		RefreshTile(_selectedIndex);
+		EmitSignal(SignalName.BoardChanged);
+	}
+
+	/// <summary>Erase a value, or clear pencil marks when the selected cell is already empty.</summary>
+	public void EraseSelected()
+	{
+		if (!CanEditSelection()) return;
+		if (ValueAt(_selectedIndex) != 0) { SetSelectedValue(0); return; }
+		_cells[_selectedIndex].Hints = Array.Empty<int>();
 		RefreshTile(_selectedIndex);
 		EmitSignal(SignalName.BoardChanged);
 	}
@@ -203,6 +225,7 @@ public partial class BoardView : Control
 
 		RenderAll();
 		ApplyHighlights();
+		GameSession.SelectedIndex = index;
 		EmitSignal(SignalName.BoardChanged);
 		CheckForCompletion();
 		return true;
@@ -382,11 +405,18 @@ public partial class BoardView : Control
 
 	// --- Selection & highlighting ---
 
-	private void OnTilePressed(int index)
+	public void SelectCell(int index)
 	{
+		if (index < 0 || index >= _cells.Length) return;
 		_selectedIndex = index;
+		GameSession.SelectedIndex = index;
 		ApplyHighlights();
+		EmitSignal(SignalName.BoardChanged);
 	}
+
+	private void OnTilePressed(int index) => SelectCell(index);
+	public bool CanEdit => CanEditSelection();
+	public int SelectedIndex => _selectedIndex;
 
 	private void ApplyHighlights()
 	{

@@ -477,6 +477,9 @@ appsettings.Development.json
 appsettings.Local.json
 launchSettings.json
 
+# Local UI verification captures.
+/output/
+
 # Logs
 logs/
 *.log

@@ -1,9 +1,10 @@
-[gd_scene load_steps=6 format=3 uid="uid://bsbmurshlkrc7"]
+[gd_scene load_steps=7 format=3 uid="uid://bsbmurshlkrc7"]
 [ext_resource type="Script" path="res://Scenes/StartScreen/StartScreen.cs" id="1"]
 [ext_resource type="PackedScene" path="res://UI/Paper/PaperBackground.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://UI/Paper/PaperHero.tscn" id="3"]
 [ext_resource type="PackedScene" path="res://UI/Paper/PaperMenu.tscn" id="4"]
 [ext_resource type="Theme" path="res://UI/Paper/PaperTheme.tres" id="5"]
+[ext_resource type="PackedScene" path="res://UI/Paper/PaperButton.tscn" id="6"]
 [node name="StartScreen" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -18,9 +19,16 @@ script = ExtResource("1")
 offset_left = 32.0
 offset_top = 20.0
 offset_right = 508.0
-offset_bottom = 620.0
+offset_bottom = 340.0
 [node name="Menu" parent="." instance=ExtResource("4")]
 offset_left = 32.0
-offset_top = 630.0
+offset_top = 370.0
 offset_right = 508.0
-offset_bottom = 1200.0
+offset_bottom = 940.0
+
+[node name="Resume" parent="." instance=ExtResource("6")]
+visible = false
+Caption = "continue where you left"
+Secondary = true
+Accent = true
+CaptionSize = 30

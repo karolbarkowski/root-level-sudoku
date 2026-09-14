@@ -1,7 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://cnbtn00000001"]
+[gd_scene load_steps=2 format=3 uid="uid://cnbtn00000001"]
 
 [ext_resource type="Script" uid="uid://dr8qf1lado3t7" path="res://Scenes/Game/NumberButton/NumberButton.cs" id="1_nbtn"]
-[ext_resource type="Script" path="res://UI/Tweens/ScaleTween.cs" id="2_scale"]
 
 [node name="NumberButton" type="Button"]
 custom_minimum_size = Vector2(0, 64)
@@ -10,6 +9,3 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 flat = true
 script = ExtResource("1_nbtn")
-
-[node name="ScaleTween" type="Node" parent="."]
-script = ExtResource("2_scale")

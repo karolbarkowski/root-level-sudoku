@@ -13,12 +13,7 @@ public partial class StartScreen : Control
 	/// <summary>Whole menu cascade, from the first row leaving to the last one settling.</summary>
 	[Export] public float MenuDuration { get; set; } = .5f;
 
-	/// <summary>Pause between the menu settling and the numeral starting. Zero runs them back to back.</summary>
-	[Export] public float NineDelay { get; set; }
-
-	[Export] public float NineDuration { get; set; } = .3f;
-
-	/// <summary>Pause between the numeral settling and the title starting. Zero runs them back to back.</summary>
+	/// <summary>Optional delay before the title enters alongside the menu.</summary>
 	[Export] public float TitleDelay { get; set; }
 
 	[Export] public float TitleDuration { get; set; } = .3f;
@@ -31,7 +26,7 @@ public partial class StartScreen : Control
 	private const float PosterWidth = 540;
 	private const float SidePadding = 32;
 	private const float EdgePadding = 40;
-	private const float HeroHeight = 600;
+	private const float HeroHeight = 320;
 	private const float HeroGap = 10;
 	private const float MenuHeight = 570;
 	private const float PosterHeight = (EdgePadding * 2) + HeroHeight + HeroGap + MenuHeight;
@@ -41,14 +36,20 @@ public partial class StartScreen : Control
 	private VBoxContainer _menu;
 	private bool _leaving;
 	private Tween _entry;
+	private PaperButton _resume;
 	public override void _Ready()
 	{
 		// The game is portrait-only. Keep one logical poster for desktop and Android.
 		GetWindow().MinSize = new Vector2I(280, 480);
 		GetWindow().ContentScaleSize = new Vector2I(540, 1220);
 		_background = GetNode<Control>("PaperBackground");
+		_background.SetAnchorsPreset(LayoutPreset.TopLeft);
 		_hero = GetNode<Control>("Hero");
 		_menu = GetNode<VBoxContainer>("Menu");
+		_resume = GetNode<PaperButton>("Resume");
+		_resume.Visible = GameSession.HasPuzzle;
+		_resume.Pressed += () => Navigate("res://Scenes/Game/Main.tscn", resume: true);
+		_menu.GetNode<Label>("Heading/Caption").Text = GameSession.HasPuzzle ? "START A NEW PUZZLE" : "CHOOSE YOUR DIFFICULTY";
 		var rows = _menu.GetNode<VBoxContainer>("Difficulties");
 		var scene = GD.Load<PackedScene>("res://UI/Paper/PaperButton.tscn");
 		foreach (SudokuGenerator.Difficulty difficulty in Enum.GetValues<SudokuGenerator.Difficulty>())
@@ -73,8 +74,10 @@ public partial class StartScreen : Control
 	{
 		// Scale one complete vertical poster. Never shrink the title independently
 		// of the controls.
-		float scale = Mathf.Min(Size.X / PosterWidth, Size.Y / PosterHeight);
-		Vector2 origin = (Size - new Vector2(PosterWidth, PosterHeight) * scale) / 2;
+		float resumeHeight = _resume.Visible ? 108 : 0;
+		float height = PosterHeight + resumeHeight;
+		float scale = Mathf.Min(Size.X / PosterWidth, Size.Y / height);
+		Vector2 origin = new Vector2((Size.X - PosterWidth * scale) / 2, Mathf.Min(24, (Size.Y - height * scale) / 2));
 		const float column = PosterWidth - (SidePadding * 2);
 		// Sized here rather than by its own full-rect anchors: on Android those never resolve
 		// against this root and the sheet collapses to 0x0, leaving the bare clear colour.
@@ -83,14 +86,15 @@ public partial class StartScreen : Control
 		_hero.Position = origin + new Vector2(SidePadding, EdgePadding) * scale;
 		_hero.Size = new Vector2(column, HeroHeight);
 		_hero.Scale = Vector2.One * scale;
-		_menu.Position = origin + new Vector2(SidePadding, EdgePadding + HeroHeight + HeroGap) * scale;
+		_resume.Position = origin + new Vector2(SidePadding, EdgePadding + HeroHeight + 20) * scale;
+		_resume.Size = new Vector2(column, 80);
+		_resume.Scale = Vector2.One * scale;
+		_menu.Position = origin + new Vector2(SidePadding, EdgePadding + HeroHeight + HeroGap + resumeHeight) * scale;
 		_menu.Size = new Vector2(column, MenuHeight);
 		_menu.Scale = Vector2.One * scale;
 	}
 	/// <summary>
-	/// Three beats, in order: the menu rises row by row, then the numeral slides in from the right,
-	/// then the title from the left. Each beat waits for the previous one to settle, so the gaps are
-	/// measured from the end of the beat before rather than from a shared zero.
+	/// The title slides into place while the menu rises row by row.
 	/// </summary>
 	private async void PlayEntry()
 	{
@@ -99,6 +103,7 @@ public partial class StartScreen : Control
 
 		// One slot per menu row. The spacer has nothing to show, so it does not take a slot.
 		var targets = new List<Control>();
+		if (_resume.Visible) targets.Add(_resume);
 		foreach (Node child in _menu.GetChildren())
 		{
 			if (child.Name == "Difficulties")
@@ -137,9 +142,7 @@ public partial class StartScreen : Control
 				.SetDelay(delay).SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
 		}
 
-		double nine = MenuDuration + NineDelay;
-		hero.PlayNine(nine, NineDuration);
-		hero.PlayTitle(nine + NineDuration + TitleDelay, TitleDuration);
+		hero.PlayTitle(TitleDelay, TitleDuration);
 	}
 
 	/// <summary>The row itself when it is a button, plus any it wraps (the footer holds two).</summary>
@@ -150,7 +153,7 @@ public partial class StartScreen : Control
 			if (child is PaperButton nested) yield return nested;
 	}
 
-	private async void Navigate(string path, SudokuGenerator.Difficulty difficulty = SudokuGenerator.Difficulty.Easy)
+	private async void Navigate(string path, SudokuGenerator.Difficulty difficulty = SudokuGenerator.Difficulty.Easy, bool resume = false)
 	{
 		if (_leaving) return;
 		_leaving = true;
@@ -158,7 +161,11 @@ public partial class StartScreen : Control
 			await ToSignal(GetTree().CreateTimer(.10), SceneTreeTimer.SignalName.Timeout);
 		if (!IsInsideTree()) return;
 		if (path == null) { GetTree().Quit(); return; }
-		if (path.Contains("/Game/")) GameSession.Difficulty = difficulty;
+		if (path.Contains("/Game/") && !resume)
+		{
+			GameSession.Clear();
+			GameSession.Difficulty = difficulty;
+		}
 		Error error = GetTree().ChangeSceneToFile(path);
 		if (error != Error.Ok) { _leaving = false; GD.PushError($"Cannot open {path}: {error}"); }
 	}

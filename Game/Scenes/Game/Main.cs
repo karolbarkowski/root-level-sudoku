@@ -1,239 +1,205 @@
 using Godot;
-
+using Sudoku;
 namespace SudokuEndless;
 
-/// <summary>How a tapped number is applied to the selected cell.</summary>
-public enum InputMode
-{
-	/// <summary>The digit becomes the cell's value.</summary>
-	Value,
+public enum InputMode { Value, Hints }
 
-	/// <summary>The digit is toggled as a pencil-mark hint.</summary>
-	Hints,
-}
-
-/// <summary>
-/// Top-level game coordinator. Builds the number-selection bar below the board, routes digit
-/// taps into the board, and keeps each button's disabled state in sync with how many of that
-/// digit are already placed (a digit is full at <see cref="BoardGeometry.Size"/> occurrences).
-///
-/// It mediates between the number bar and the board so neither needs to know about the other.
-/// </summary>
+/// <summary>Coordinates the reusable board, paper actions and digit keys on a portrait sheet.</summary>
 [Tool]
 public partial class Main : Control
 {
-	/// <summary>The NumberButton scene instanced once per digit (1-9).</summary>
-	[Export]
-	public PackedScene NumberButtonScene { get; set; }
+    [Export] public PackedScene NumberButtonScene { get; set; }
+    [Export] public ButtonGroup NumberSelection { get; set; }
+    private BoardView _board;
+    private Control _sheet;
+    private PaperIconButton _notes;
+    private PaperIconButton _undo;
+    private PaperIconButton _redo;
+    private PaperIconButton _erase;
+    private bool _paused;
+    private int _activeDigit;
+    private PaperIconButton _pause;
+    private Tween _entry;
+    private bool _leaving;
+    private bool _previousBack;
+    private readonly NumberButton[] _keys = new NumberButton[9];
 
-	/// <summary>
-	/// Optional. Assign NumberSelection.tres to turn the digit buttons into a radio group, so the bar
-	/// also shows which digit was tapped last. Purely visual: input stays cell-first, and tapping the
-	/// already-selected digit still applies it.
-	/// </summary>
-	[Export]
-	public ButtonGroup NumberSelection { get; set; }
+    public override void _Ready()
+    {
+        _sheet = GetNode<Control>("%Sheet");
+        _board = GetNode<BoardView>("%Board");
+        _notes = GetNode<PaperIconButton>("%ModeToggle");
+        _undo = GetNode<PaperIconButton>("%UndoButton");
+        _redo = GetNode<PaperIconButton>("%RedoButton");
+        _erase = GetNode<PaperIconButton>("%EraseButton");
+        _pause = GetNode<PaperIconButton>("%PauseButton");
+        _pause.Pressed += () => SetPaused(!_paused);
+        GetNode<Control>("%PausePanel").GetNode<PaperButton>("Resume").Pressed += () => SetPaused(false);
+        GetNode<Label>("%Difficulty").Text = GameSession.Difficulty.ToString().ToUpperInvariant();
+        GetNode<PaperIconButton>("%BackButton").Pressed += BackToMenu;
+        _undo.Pressed += () => _board.Undo();
+        _redo.Pressed += () => _board.Redo();
+        _erase.Pressed += () => _board.EraseSelected();
+        _notes.SetPressedNoSignal(GameSession.NotesMode);
+        _notes.Toggled += SetNotes;
+        var grid = GetNode<GridContainer>("%NumberBar");
+        for (int n = 1; n <= 9; n++)
+        {
+            var key = NumberButtonScene.Instantiate<NumberButton>();
+            key.Number = n;
+            key.Name = "Digit" + n;
+            key.NumberPressed += EnterNumber;
+            grid.AddChild(key);
+            _keys[n - 1] = key;
+        }
+        _board.BoardChanged += Refresh;
+        _board.Solved += OnSolved;
+        Resized += Layout;
+        Layout();
+        SetNotes(GameSession.NotesMode);
+        if (!Engine.IsEditorHint())
+        {
+            _previousBack = GetTree().QuitOnGoBack;
+            GetTree().QuitOnGoBack = false;
+            PlayEntry();
+        }
+    }
 
-	/// <summary>Scene shown once the puzzle is solved.</summary>
-	private const string SummaryScenePath = "res://Scenes/Summary/Summary.tscn";
+    private void Layout()
+    {
+        var background = GetNode<Control>("PaperBackground");
+        background.SetAnchorsPreset(LayoutPreset.TopLeft);
+        background.Position = Vector2.Zero;
+        background.Size = Size;
+        // Pin the header and controls to the edges; center the square in the space between.
+        float scale = Mathf.Min(Size.X / 540, Size.Y / 980);
+        float height = Size.Y / scale - 32;
+        _sheet.SetAnchorsPreset(LayoutPreset.TopLeft);
+        _sheet.Size = new Vector2(476, height);
+        _sheet.Scale = Vector2.One * scale;
+        _sheet.Position = new Vector2((Size.X - 476 * scale) / 2, 32 * scale);
+        void Place(string path, float y, float h)
+        {
+            var control = _sheet.GetNode<Control>(path);
+            control.Position = new Vector2(0, y);
+            control.Size = new Vector2(476, h);
+        }
+        Place("Navigation", 0, 64);
+        Place("BoardArea", (64 + height - 328 - 476) / 2, 476);
+        Place("Actions", height - 328, 88);
+        Place("NumberBar", height - 220, 220);
+    }
 
-	/// <summary>Side inset of the sheet, matching the margins set on the Sheet container.</summary>
-	private const float SheetMargin = 32;
+    // Assembly reloads do not necessarily rerun _Ready or emit Resized in the 2D editor.
+    // Reapply the layout there so the preview cannot retain the old bottom margin.
+    public override void _Process(double delta)
+    {
+        if (Engine.IsEditorHint() && IsNodeReady() && IsInstanceValid(_sheet) && Size.X > 0 && Size.Y > 0)
+            Layout();
+    }
 
-	private BoardView _board;
-	private Control _background;
-	private Control _sheet;
-	private HBoxContainer _numberBar;
-	private PaperButton _modeToggle;
-	private Button _undoButton;
-	private Button _redoButton;
-	private NumberButton[] _buttons;
-	private InputMode _mode = InputMode.Value;
+    private void SetNotes(bool enabled)
+    {
+        if (!Engine.IsEditorHint()) GameSession.NotesMode = enabled;
+        _notes.Caption = enabled ? "Notes ON" : "Notes OFF";
+        _notes.Accent = enabled;
+        _notes.QueueRedraw();
+        Refresh();
+    }
 
-	public override void _Ready()
-	{
-		_background = GetNodeOrNull<Control>("PaperBackground");
-		_sheet = GetNodeOrNull<Control>("%Sheet");
-		_board = GetNodeOrNull<BoardView>("%Board");
-		Resized += Layout;
-		Layout();
+    private void EnterNumber(int number)
+    {
+        if (_paused || !_board.CanEdit) return;
+        _activeDigit = number;
+        if (_notes.ButtonPressed) _board.ToggleSelectedHint(number);
+        else _board.SetSelectedValue(number);
+        Refresh();
+    }
 
-		_numberBar = GetNodeOrNull<HBoxContainer>("%NumberBar");
-		if (_numberBar == null)
-		{
-			GD.PushError("Main: expected an HBoxContainer with unique name 'NumberBar'.");
-			return;
-		}
+    private void Refresh()
+    {
+        int[] counts = _board.GetValueCounts();
+        _undo.Disabled = _paused || !_board.CanUndo;
+        _redo.Disabled = _paused || !_board.CanRedo;
+        _erase.Disabled = _paused || !_board.CanEdit;
+        _notes.Disabled = _paused;
+        _undo.RefreshFeedback();
+        _redo.RefreshFeedback();
+        _erase.RefreshFeedback();
+        // Keep keys available: nine occurrences do not guarantee nine correct placements.
+        foreach (var key in _keys)
+        {
+            if (key == null) continue;
+            key.Remaining = Mathf.Max(0, 9 - counts[key.Number]);
+            key.Selected = key.Number == _activeDigit;
+            key.Disabled = _paused || !_board.CanEdit;
+            key.RefreshAvailability();
+        }
+    }
 
-		_modeToggle = GetNodeOrNull<PaperButton>("%ModeToggle");
-		if (_modeToggle != null)
-		{
-			_modeToggle.Toggled += OnModeToggled;
-			_mode = _modeToggle.ButtonPressed ? InputMode.Hints : InputMode.Value;
-		}
+    public void SetPaused(bool paused)
+    {
+        _paused = paused;
+        _board.Visible = !paused;
+        GetNode<Control>("%PausePanel").Visible = paused;
+        _pause.Symbol = paused ? PaperIconButton.Glyph.Play : PaperIconButton.Glyph.Pause;
+        _pause.AccessibilityName = paused ? "Resume puzzle" : "Pause puzzle";
+        _pause.TooltipText = _pause.AccessibilityName;
+        _pause.QueueRedraw();
+        Refresh();
+        if (paused) GetNode<Control>("%PausePanel").GetNode<PaperButton>("Resume").GrabFocus();
+        else _pause.GrabFocus();
+    }
 
-		_undoButton = GetNodeOrNull<Button>("%UndoButton");
-		_redoButton = GetNodeOrNull<Button>("%RedoButton");
-		if (_undoButton != null)
-		{
-			_undoButton.Pressed += OnUndo;
-		}
+    public void BackToMenu()
+    {
+        if (_leaving || Engine.IsEditorHint()) return;
+        _leaving = true;
+        var error = GetTree().ChangeSceneToFile("res://Scenes/StartScreen/StartScreen.tscn");
+        if (error != Error.Ok) { _leaving = false; GD.PushError($"Cannot open menu: {error}"); }
+    }
 
-		if (_redoButton != null)
-		{
-			_redoButton.Pressed += OnRedo;
-		}
+    private void OnSolved()
+    {
+        GameSession.Clear();
+        GetTree().ChangeSceneToFile("res://Scenes/Summary/Summary.tscn");
+    }
 
-		if (_board != null)
-		{
-			_board.BoardChanged += OnBoardChanged;
-			_board.Solved += OnSolved;
-		}
+    public override void _Notification(int what)
+    {
+        if (what == NotificationWMGoBackRequest && IsNodeReady()) BackToMenu();
+    }
 
-		BuildNumberButtons();
-		OnBoardChanged();
-	}
+    public override void _UnhandledKeyInput(InputEvent @event)
+    {
+        if (@event is not InputEventKey key || !key.Pressed || key.Echo) return;
+        if (_paused) { if (key.Keycode == Key.Escape) SetPaused(false); return; }
+        if (key.Keycode == Key.Escape) BackToMenu();
+        else if (key.Keycode >= Key.Key1 && key.Keycode <= Key.Key9) EnterNumber((int)key.Keycode - (int)Key.Key0);
+        else if (key.Keycode == Key.Backspace || key.Keycode == Key.Delete) _board.EraseSelected();
+        else return;
+        GetViewport().SetInputAsHandled();
+    }
 
-	/// <summary>
-	/// The sheet and its paper are sized here rather than by their own full-rect anchors: on Android
-	/// those resolve to 0x0 against this root and the screen collapses to the bare clear colour. Same
-	/// fix as StartScreen. Godot warns that anchors override this — they do not, they never run.
-	///
-	/// The board is square, but as a plain Control it reports no minimum, so left to expand it would
-	/// float centred in whatever height is left over. Pin its height to the sheet's width instead and
-	/// let the spacer below it take the slack, which seats the grid at the top of the sheet.
-	/// </summary>
-	private void Layout()
-	{
-		if (_background != null)
-		{
-			_background.Position = Vector2.Zero;
-			_background.Size = Size;
-		}
+    private async void PlayEntry()
+    {
+        if (!UiAnimationSettings.Default.Enabled) return;
+        var column = _sheet;
+        foreach (Control child in column.GetChildren()) child.Modulate = new Color(1,1,1,.001f);
+        await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+        if (!IsInsideTree()) return;
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        if (!IsInsideTree() || _leaving) return;
+        _entry = CreateTween().SetParallel().SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
+        int i = 0;
+        foreach (Control child in column.GetChildren())
+            _entry.TweenProperty(child, "modulate:a", 1f, .3).SetDelay(i++ * .055);
+    }
 
-		if (_sheet != null)
-		{
-			_sheet.Position = Vector2.Zero;
-			_sheet.Size = Size;
-		}
-
-		if (_board != null)
-		{
-			_board.CustomMinimumSize = new Vector2(0, Mathf.Max(0, Size.X - (SheetMargin * 2)));
-		}
-	}
-
-	public override void _ExitTree() => Resized -= Layout;
-
-	private void OnModeToggled(bool hintsOn)
-	{
-		_mode = hintsOn ? InputMode.Hints : InputMode.Value;
-	}
-
-	private void OnUndo() => _board?.Undo();
-
-	private void OnRedo() => _board?.Redo();
-
-	private void OnSolved()
-	{
-		GetTree().ChangeSceneToFile(SummaryScenePath);
-	}
-
-	// Any board change can affect both the digit counts and what can be undone/redone.
-	private void OnBoardChanged()
-	{
-		RefreshDisabledStates();
-		RefreshActionButtons();
-	}
-
-	private void RefreshActionButtons()
-	{
-		if (_undoButton != null)
-		{
-			_undoButton.Disabled = !(_board?.CanUndo ?? false);
-		}
-
-		if (_redoButton != null)
-		{
-			_redoButton.Disabled = !(_board?.CanRedo ?? false);
-		}
-	}
-
-	private void BuildNumberButtons()
-	{
-		if (NumberButtonScene == null)
-		{
-			return;
-		}
-
-		foreach (Node child in _numberBar.GetChildren())
-		{
-			child.QueueFree();
-		}
-
-		_buttons = new NumberButton[BoardGeometry.Size];
-		for (int n = 1; n <= BoardGeometry.Size; n++)
-		{
-			_buttons[n - 1] = AddButton(n);
-		}
-
-		// Erase button: same row, rendered blank, number 0 (which the board reads as "clear").
-		// It is not tracked in _buttons, so it is never disabled by digit counts.
-		AddButton(0);
-	}
-
-	private NumberButton AddButton(int number)
-	{
-		var button = NumberButtonScene.Instantiate<NumberButton>();
-		button.Number = number;
-		button.NumberPressed += OnNumberPressed;
-
-		// Erase stays outside the group — it is an action, not one of the choices.
-		if (NumberSelection != null && number != 0)
-		{
-			button.ToggleMode = true;
-			button.ButtonGroup = NumberSelection;
-		}
-
-		_numberBar.AddChild(button);
-		return button;
-	}
-
-	/// <summary>
-	/// A digit was tapped: in value mode it becomes the cell's value; in hint mode it toggles a
-	/// pencil mark. Erase (0) always clears the cell regardless of mode.
-	/// </summary>
-	private void OnNumberPressed(int number)
-	{
-		if (_board == null)
-		{
-			return;
-		}
-
-		if (number == 0 || _mode == InputMode.Value)
-		{
-			_board.SetSelectedValue(number);
-		}
-		else
-		{
-			_board.ToggleSelectedHint(number);
-		}
-	}
-
-	/// <summary>Disables each digit button whose value already appears the maximum number of times.</summary>
-	private void RefreshDisabledStates()
-	{
-		if (_buttons == null || _board == null)
-		{
-			return;
-		}
-
-		int[] counts = _board.GetValueCounts();
-		for (int n = 1; n <= BoardGeometry.Size; n++)
-		{
-			_buttons[n - 1].Disabled = counts[n] >= BoardGeometry.Size;
-			// Disabled has no change signal, and the key draws itself.
-			_buttons[n - 1].RefreshAvailability();
-		}
-	}
+    public override void _ExitTree()
+    {
+        Resized -= Layout;
+        _entry?.Kill();
+        if (!Engine.IsEditorHint()) GetTree().QuitOnGoBack = _previousBack;
+    }
 }

@@ -1,0 +1,6 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://UI/Paper/PaperIconButton.cs" id="1"]
+[node name="PaperIconButton" type="Button"]
+custom_minimum_size = Vector2(64, 88)
+script = ExtResource("1")
+flat = true

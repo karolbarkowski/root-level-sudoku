@@ -7,7 +7,7 @@ public static class PaperStyle
 {
     public static readonly Color Ink = new("292a28");
     public static readonly Color Paper = new("eeeae0");
-    public static readonly Color Burgundy = new("87464b");
+    public static readonly Color Burgundy = new("80363E");
     public static readonly Color Muted = new("777770");
 
     private static Font _display;
@@ -20,6 +20,8 @@ public static class PaperStyle
     /// <summary>Draws a hairline rule around <paramref name="rect"/>, inset rather than centred on it.</summary>
     public static void DrawBorder(CanvasItem target, Rect2 rect, Color color, float thickness = 1.5f)
     {
+        // A rule must cover at least one physical pixel when the portrait sheet is scaled down.
+        thickness = Mathf.Max(2f, Mathf.Max(thickness, 1f / Mathf.Max(.01f, target.GetGlobalTransformWithCanvas().Scale.X)));
         target.DrawRect(new Rect2(rect.Position, new Vector2(rect.Size.X, thickness)), color);
         target.DrawRect(new Rect2(rect.Position + new Vector2(0, rect.Size.Y - thickness), new Vector2(rect.Size.X, thickness)), color);
         target.DrawRect(new Rect2(rect.Position, new Vector2(thickness, rect.Size.Y)), color);
