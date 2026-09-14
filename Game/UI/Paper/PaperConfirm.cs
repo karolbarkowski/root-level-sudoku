@@ -8,6 +8,7 @@ namespace SudokuEndless;
 /// a full-screen Control, which sizes it (anchors alone do not resolve against every root). It stays
 /// hidden until <see cref="Open"/>; tapping the dimmed area cancels.
 /// </summary>
+[Tool]
 public partial class PaperConfirm : Control
 {
     [Signal] public delegate void ConfirmedEventHandler();
@@ -41,6 +42,8 @@ public partial class PaperConfirm : Control
 
     public override void _Ready()
     {
+        // [Tool] only so the game scene's own [Tool] script can find it; nothing to show in the editor.
+        if (Engine.IsEditorHint()) return;
         SetAnchorsPreset(LayoutPreset.TopLeft);
         MouseFilter = MouseFilterEnum.Stop;
         Visible = false;

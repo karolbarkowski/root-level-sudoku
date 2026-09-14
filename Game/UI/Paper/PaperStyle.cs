@@ -18,6 +18,14 @@ public static class PaperStyle
     public static Font Display => _display ??= GD.Load<Font>("res://Resources/fonts/Anton/Anton-Regular.ttf");
     public static Font Body => _body ??= GD.Load<Font>("res://Resources/fonts/Alata-Regular.ttf");
 
+    private static ShaderMaterial _iconTint;
+
+    /// <summary>
+    /// Material for a control that draws tinted icons: every texture is painted in its draw colour,
+    /// so black SVGs take any colour. Shared, since it has no per-control state.
+    /// </summary>
+    public static ShaderMaterial IconTint => _iconTint ??= new ShaderMaterial { Shader = GD.Load<Shader>("res://UI/Paper/IconTint.gdshader") };
+
     /// <summary>Draws a hairline rule around <paramref name="rect"/>, inset rather than centred on it.</summary>
     public static void DrawBorder(CanvasItem target, Rect2 rect, Color color, float thickness = 1.5f)
     {

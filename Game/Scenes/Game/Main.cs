@@ -20,6 +20,8 @@ public partial class Main : Control, ITransitionScreen
     private PaperIconButton _redo;
     private PaperIconButton _restart;
     private PaperConfirm _restartConfirm;
+    private SolvedPanel _solvedPanel;
+    private bool _solved;
     private int _activeDigit;
     private int _lastSelectedIndex = -1;
     private int _lastSelectedValue;
@@ -62,6 +64,12 @@ public partial class Main : Control, ITransitionScreen
         _restartConfirm = GetNode<PaperConfirm>("%RestartConfirm");
         _restart.Pressed += () => { if (!_leaving) _restartConfirm.Open(); };
         _restartConfirm.Confirmed += () => _board.Restart();
+        _solvedPanel = GetNode<SolvedPanel>("%SolvedPanel");
+        _solvedPanel.MenuRequested += BackToMenu;
+        _solvedPanel.NewPuzzleRequested += () =>
+        {
+            if (!_leaving) _leaving = SceneTransition.StartNewGame(GameSession.Difficulty);
+        };
         GetNode<Label>("%Difficulty").Text = GameSession.Difficulty.ToString().ToUpperInvariant();
         GetNode<PaperIconButton>("%BackButton").Pressed += BackToMenu;
         _undo.Pressed += () => _board.Undo();
@@ -97,10 +105,11 @@ public partial class Main : Control, ITransitionScreen
         background.SetAnchorsPreset(LayoutPreset.TopLeft);
         background.Position = Vector2.Zero;
         background.Size = Size;
-        if (_restartConfirm != null)
+        foreach (Control overlay in new Control[] { _restartConfirm, _solvedPanel })
         {
-            _restartConfirm.Position = Vector2.Zero;
-            _restartConfirm.Size = Size;
+            if (overlay == null) continue;
+            overlay.Position = Vector2.Zero;
+            overlay.Size = Size;
         }
         // Pin the header and controls to the edges; center the square in the space between.
         float scale = Mathf.Min(Size.X / 540, Size.Y / 980);
@@ -120,6 +129,8 @@ public partial class Main : Control, ITransitionScreen
         Place(1, (64 + height - 352 - 476) / 2, 476);
         Place(2, height - 352, 112);
         Place(3, height - 220, 220);
+        // The solved sheet rises to just below the board.
+        _solvedPanel?.Place(_sheet.Position.Y + (_sectionY[BoardSection] + 476 + 20) * scale, _sheet.Position.X, scale);
     }
 
     /// <summary>Animated offset on top of the laid-out position, so a resize mid-animation keeps both.</summary>
@@ -150,6 +161,7 @@ public partial class Main : Control, ITransitionScreen
 
     private void EnterNumber(int number)
     {
+        if (_solved) return;
         if (!_board.CanEdit) return;
         _activeDigit = number;
         if (_notes.ButtonPressed)
@@ -217,9 +229,12 @@ public partial class Main : Control, ITransitionScreen
 
     private void OnSolved()
     {
-        if (_leaving) return;
+        if (_solved || _leaving) return;
+        _solved = true;
+        // A solved puzzle cannot be resumed; the difficulty stays for the next one.
         GameSession.Clear();
-        _leaving = SceneTransition.GoTo(SceneTransition.SummaryPath);
+        _board.ClearSelection();
+        _solvedPanel.Open(GameSession.Difficulty);
     }
 
     public override void _Notification(int what)
@@ -230,7 +245,7 @@ public partial class Main : Control, ITransitionScreen
     public override void _UnhandledKeyInput(InputEvent @event)
     {
         if (@event is not InputEventKey key || !key.Pressed || key.Echo) return;
-        if (_restartConfirm.IsOpen && key.Keycode != Key.Escape) return;
+        if ((_restartConfirm.IsOpen || _solved) && key.Keycode != Key.Escape) return;
         if (key.Keycode == Key.Escape) BackToMenu();
         else if (key.Keycode >= Key.Key1 && key.Keycode <= Key.Key9) EnterNumber((int)key.Keycode - (int)Key.Key0);
         else if (key.Keycode == Key.Backspace || key.Keycode == Key.Delete) _board.EraseSelected();
@@ -289,6 +304,7 @@ public partial class Main : Control, ITransitionScreen
             if (i != BoardSection) _entry.TweenProperty(_sections[i], "modulate:a", 0f, ExitDuration).SetDelay(delay);
             _entry.TweenMethod(Callable.From<float>(v => SetSectionShift(section, v)), _sectionShift[i], ExitSink, ExitDuration).SetDelay(delay);
         }
+        if (_solvedPanel.IsOpen) _entry.TweenProperty(_solvedPanel, "modulate:a", 0f, ExitDuration);
         await ToSignal(GetTree().CreateTimer(ExitDuration + (_sections.Length - 1) * ExitStagger), SceneTreeTimer.SignalName.Timeout);
     }
 

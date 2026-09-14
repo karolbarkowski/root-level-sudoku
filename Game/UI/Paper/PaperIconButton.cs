@@ -9,6 +9,9 @@ public partial class PaperIconButton : Button
 	public enum Glyph { Back, Pause, Play, Undo, Redo, Erase, Edit }
 	[Export] public Glyph Symbol { get; set; }
 	[Export] public Texture2D SvgIcon { get; set; }
+
+	/// <summary>Paints <see cref="SvgIcon"/> in the accent colour instead of its own.</summary>
+	[Export] public bool TintIcon { get; set; }
 	[Export] public string Caption { get; set; } = "";
 	[Export] public bool Accent { get; set; }
 
@@ -23,6 +26,7 @@ public partial class PaperIconButton : Button
 	private Tween _tween;
 	public override void _Ready()
 	{
+		if (TintIcon) Material = PaperStyle.IconTint;
 		foreach (string state in new[] { "normal", "hover", "pressed", "hover_pressed", "disabled", "focus" })
 			AddThemeStyleboxOverride(state, new StyleBoxEmpty());
 		AccessibilityName = Caption.Length > 0 ? Caption : Symbol.ToString();
@@ -66,7 +70,8 @@ public partial class PaperIconButton : Button
 		DrawSetTransform(center, 0, Vector2.One * glyphScale);
 		void Line(Vector2 a, Vector2 b) => DrawLine(a, b, ink, 2.2f, true);
 		if (SvgIcon != null) {
-			DrawTextureRect(SvgIcon, new Rect2(-14, -14, 28, 28), false, ink);
+			Color icon = TintIcon ? PaperStyle.Burgundy with { A = ink.A } : ink;
+			DrawTextureRect(SvgIcon, new Rect2(-14, -14, 28, 28), false, icon);
 		} else if (Symbol == Glyph.Back) {
 			Line(new(-10,0), new(11,0)); Line(new(-10,0),new(-2,-8)); Line(new(-10,0),new(-2,8));
 		} else if (Symbol == Glyph.Pause) {

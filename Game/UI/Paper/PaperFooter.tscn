@@ -1,5 +1,7 @@
 [gd_scene load_steps=2 format=3]
 [ext_resource type="PackedScene" path="res://UI/Paper/PaperButton.tscn" id="1"]
+[ext_resource type="Texture2D" path="res://Resources/icons/settings.svg" id="2"]
+[ext_resource type="Texture2D" path="res://Resources/icons/quit.svg" id="3"]
 [node name="Footer" type="HBoxContainer"]
 theme_override_constants/separation = 12
 [node name="Settings" parent="." instance=ExtResource("1")]
@@ -7,10 +9,10 @@ layout_mode = 2
 size_flags_horizontal = 3
 Caption = "Settings"
 Secondary = true
-Symbol = 1
+Icon = ExtResource("2")
 [node name="Quit" parent="." instance=ExtResource("1")]
 layout_mode = 2
 size_flags_horizontal = 3
 Caption = "Quit"
 Secondary = true
-Symbol = 2
+Icon = ExtResource("3")

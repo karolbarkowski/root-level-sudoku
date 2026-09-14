@@ -46,6 +46,12 @@ public partial class NumberButton : Button
 			_selectionTween.TweenMethod(Callable.From<float>(v => { _selection = v; QueueRedraw(); }), _selection, target, .12);
 		}
 	}
+	/// <summary>
+	/// Visual space between neighbouring keys. The bar itself has no separation, so the keys' tap
+	/// areas meet and a near-miss still lands on a key instead of the empty space behind them.
+	/// </summary>
+	private const float PlateGap = 4;
+
 	private readonly StyleBoxFlat _plate = new() { CornerRadiusTopLeft = 8, CornerRadiusTopRight = 8, CornerRadiusBottomLeft = 3, CornerRadiusBottomRight = 3 };
 	private float _highlight;
 	private float _depression;
@@ -134,7 +140,7 @@ public partial class NumberButton : Button
 		float inset = _depression * 2;
 		float top = Size.Y * .12f * (1 - _selection);
 		DrawSetTransform(new Vector2(0, top));
-		var rect = new Rect2(new Vector2(inset, inset + _depression), Size - new Vector2(0,top) - (Vector2.One * inset * 2));
+		var rect = new Rect2(new Vector2(inset + PlateGap / 2, inset + _depression), Size - new Vector2(PlateGap, top) - (Vector2.One * inset * 2));
 
 		_plate.BgColor = PaperStyle.Surface.Lerp(PaperStyle.Burgundy, h);
 		DrawStyleBox(_plate, rect);

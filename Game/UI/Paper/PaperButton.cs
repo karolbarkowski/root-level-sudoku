@@ -7,7 +7,6 @@ namespace SudokuEndless;
 [Tool]
 public partial class PaperButton : Button
 {
-    public enum PaperIcon { None, Settings, Exit, Coffee }
     [Export] public string Caption { get; set; } = "Easy";
     [Export] public string Index { get; set; } = "01";
     [Export] public bool Secondary { get; set; }
@@ -16,7 +15,11 @@ public partial class PaperButton : Button
     /// <summary>Low-emphasis secondary action: no surface until hovered or pressed, muted caption.</summary>
     [Export] public bool Ghost { get; set; }
     [Export] public int CaptionSize { get; set; } = 24;
-    [Export] public PaperIcon Symbol { get; set; }
+    /// <summary>Optional icon drawn before a secondary button's caption, in the accent colour.</summary>
+    [Export] public Texture2D Icon { get; set; }
+
+    private const float IconSize = 26;
+    private const float IconGap = 10;
     private float _highlight;
     private float _depression;
     private bool _hovered;
@@ -94,6 +97,7 @@ public partial class PaperButton : Button
 
     public override void _Ready()
     {
+        if (Icon != null) Material = PaperStyle.IconTint;
         MouseDefaultCursorShape = CursorShape.PointingHand;
         AccessibilityName = Secondary ? Caption : $"Start {Caption} puzzle";
         CustomMinimumSize = new Vector2(100, Ghost ? 52 : Secondary ? 66 : 68);
@@ -148,10 +152,16 @@ public partial class PaperButton : Button
         if (Secondary)
         {
             float width = PaperStyle.Body.GetStringSize(Caption, fontSize: CaptionSize).X;
-            float extra = Symbol == PaperIcon.None ? 0 : 34;
+            float extra = Icon == null ? 0 : IconSize + IconGap;
             float left = (Size.X - width - extra) / 2;
             DrawString(PaperStyle.Body, new Vector2(left + extra, baseline), Caption, fontSize: CaptionSize, modulate: foreground);
-            if (Symbol != PaperIcon.None) DrawIcon(new Vector2(left + 11, Size.Y / 2 + _depression), Ghost ? PaperStyle.Burgundy : foreground);
+            if (Icon != null)
+            {
+                // Accent where it contrasts; on an orange (accent or highlighted) surface, follow the caption.
+                Color icon = Ghost ? PaperStyle.Burgundy : Accent ? foreground : PaperStyle.Burgundy.Lerp(foreground, h);
+                if (Disabled) icon.A = .35f;
+                DrawTextureRect(Icon, new Rect2(left, (Size.Y - IconSize) / 2 + _depression, IconSize, IconSize), false, icon);
+            }
         }
         else
         {
@@ -166,31 +176,4 @@ public partial class PaperButton : Button
     }
 
     private void Border(Rect2 rect, Color color) => PaperStyle.DrawBorder(this, rect, color);
-
-    private void DrawIcon(Vector2 center, Color color)
-    {
-        if (Symbol == PaperIcon.Settings)
-        {
-            DrawArc(center, 8, 0, Mathf.Tau, 24, color, 1.5f, true);
-            DrawArc(center, 3, 0, Mathf.Tau, 16, color, 1.5f, true);
-            for (int i = 0; i < 8; i++)
-            {
-                Vector2 direction = Vector2.FromAngle(i * Mathf.Tau / 8);
-                DrawLine(center + direction * 8, center + direction * 12, color, 3, true);
-            }
-        }
-        else if (Symbol == PaperIcon.Coffee)
-        {
-            DrawPolyline(new[] { center + new Vector2(-11,-3), center + new Vector2(-9,10), center + new Vector2(4,10), center + new Vector2(6,-3), center + new Vector2(-11,-3) }, color, 1.5f, true);
-            DrawArc(center + new Vector2(6,3), 4, -Mathf.Pi / 2, Mathf.Pi / 2, 12, color, 1.5f, true);
-            for (int i = 0; i < 3; i++)
-                DrawLine(center + new Vector2(-6 + i * 4, -7), center + new Vector2(-6 + i * 4, -12), color, 1.5f, true);
-        }
-        else
-        {
-            DrawPolyline(new[] { center + new Vector2(1,-11), center + new Vector2(-10,-11), center + new Vector2(-10,11), center + new Vector2(1,11) }, color, 1.5f, true);
-            DrawLine(center + new Vector2(-4,0), center + new Vector2(12,0), color, 1.5f, true);
-            DrawPolyline(new[] { center + new Vector2(6,-6), center + new Vector2(12,0), center + new Vector2(6,6) }, color, 1.5f, true);
-        }
-    }
 }

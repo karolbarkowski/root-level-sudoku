@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" path="res://UI/Paper/PaperFooter.tscn" id="1"]
 [ext_resource type="PackedScene" path="res://UI/Paper/PaperButton.tscn" id="2"]
+[ext_resource type="Texture2D" path="res://Resources/icons/coffee.svg" id="3"]
 
 [node name="Menu" type="VBoxContainer" unique_id=451894929]
 theme_override_constants/separation = 12
@@ -44,4 +45,4 @@ Caption = "Buy me a coffee"
 Secondary = true
 Ghost = true
 CaptionSize = 20
-Symbol = 3
+Icon = ExtResource("3")

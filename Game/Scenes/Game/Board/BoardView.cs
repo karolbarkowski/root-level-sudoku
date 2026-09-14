@@ -19,7 +19,7 @@ namespace SudokuEndless;
 ///
 /// <c>[Tool]</c> so the grid is visible in the editor; generation is skipped there (it is expensive)
 /// and an empty board is previewed instead.
-/// </summary>
+/// </summary> 
 [Tool]
 public partial class BoardView : Control
 {

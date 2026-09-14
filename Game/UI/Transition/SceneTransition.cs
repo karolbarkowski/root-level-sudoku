@@ -24,7 +24,6 @@ public partial class SceneTransition : CanvasLayer
     public const string StartScreenPath = "res://Scenes/StartScreen/StartScreen.tscn";
     public const string GamePath = "res://Scenes/Game/Main.tscn";
     public const string SettingsPath = "res://Scenes/Settings/Settings.tscn";
-    public const string SummaryPath = "res://Scenes/Summary/Summary.tscn";
 
     /// <summary>Delay before the cover follows an animated exit, so the exit is seen first.</summary>
     private const double CoverDelay = .1;
