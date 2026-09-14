@@ -1,10 +1,11 @@
 using Godot;
+using Sudoku;
 
 namespace SudokuEndless;
 
 /// <summary>
-/// Shown after a puzzle is solved. Displays a congratulations message and offers a fresh game by
-/// reloading the main scene.
+/// Shown after a puzzle is solved. Displays a congratulations message and offers a fresh game at the
+/// same difficulty.
 /// </summary>
 public partial class Summary : Control
 {
@@ -17,8 +18,5 @@ public partial class Summary : Control
 		}
 	}
 
-	private void OnPlayAgain()
-	{
-		GetTree().ChangeSceneToFile("res://Scenes/Game/Main.tscn");
-	}
+	private void OnPlayAgain() => SceneTransition.StartNewGame(GameSession.Difficulty);
 }

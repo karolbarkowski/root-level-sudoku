@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using Godot;
 using Generators.Sudoku;
 using Sudoku;
@@ -48,9 +50,28 @@ public partial class BoardView : Control
 	private readonly CellData[] _cells = new CellData[BoardGeometry.CellCount];
 	private Board _game;
 	private int _selectedIndex = -1;
+	private Task _built = Task.CompletedTask;
+
+	/// <summary>
+	/// Fonts for every tile's labels. One shared theme, resized with the cells: per-label overrides
+	/// on 81 tiles × 10 labels re-theme and re-measure ~800 labels on every layout pass.
+	/// </summary>
+	private readonly Theme _tileTheme = new();
+	private const string TileValueType = "TileValue";
+	private int _valueFontSize;
+	private int _hintFontSize;
+
+	/// <summary>
+	/// Frame budget for building tiles in game. Each tile is a small scene, and building all 81 at
+	/// once stalls the frame long enough to freeze the loading spinner.
+	/// </summary>
+	private const double BuildBudgetMs = 6;
 
 	public bool CanUndo => _game?.CanUndo ?? false;
 	public bool CanRedo => _game?.CanRedo ?? false;
+
+	/// <summary>Completes once every tile exists and shows the current state. Built over several frames in game.</summary>
+	public Task WhenBuilt => _built;
 
 	public override void _Ready()
 	{
@@ -66,58 +87,35 @@ public partial class BoardView : Control
 
 		ApplyGridSpacing();
 		ApplyBoardFrame();
-		BuildBoard();
+		ApplyTileTheme();
 
-		// The generator does real work (simulated annealing); don't run it on every editor open.
-		if (Engine.IsEditorHint())
+		// The generator does real work (simulated annealing); the editor previews an empty board.
+		if (!Engine.IsEditorHint() && GameSession.HasPuzzle)
 		{
-			LoadEmpty();
+			_game = GameSession.ActiveBoard;
+			Array.Copy(GameSession.Cells, _cells, _cells.Length);
+			_selectedIndex = GameSession.SelectedIndex;
 		}
-		else
-		{
-			if (GameSession.HasPuzzle)
-			{
-				_game = GameSession.ActiveBoard;
-				Array.Copy(GameSession.Cells, _cells, _cells.Length);
-				_selectedIndex = GameSession.SelectedIndex;
-				RenderAll();
-				ApplyHighlights();
-			}
-			else LoadEmpty();
-		}
+		else LoadEmpty();
+
+		_built = BuildBoardAsync(sliced: !Engine.IsEditorHint());
 	}
 
 	// --- Central manager surface (delegates to the domain board) ---
 
 	/// <summary>Generates a fresh puzzle at the given difficulty and renders it.</summary>
-	public void NewGame(SudokuGenerator.Difficulty difficulty)
-	{
-		EnsureCells();
-		_game = SudokuGenerator.Generate(difficulty);
-		InstallGeneratedGame(_game, difficulty);
-	}
+	public void NewGame(SudokuGenerator.Difficulty difficulty) =>
+		InstallGeneratedGame(SudokuGenerator.Generate(difficulty), difficulty);
 
 	/// <summary>Installs a board generated off the main thread. Must be called on the Godot thread.</summary>
 	public void InstallGeneratedGame(Board generated, SudokuGenerator.Difficulty difficulty)
 	{
-		EnsureCells();
+		GameSession.Start(generated, difficulty);
 		_game = generated;
 		_selectedIndex = -1;
-
-		for (int i = 0; i < BoardGeometry.CellCount; i++)
-		{
-			int value = ValueAt(i);
-			_cells[i].Value = value;
-			_cells[i].IsGiven = value != 0;   // non-empty cells after generation are the clues
-			_cells[i].Hints = Array.Empty<int>();
-		}
-
+		Array.Copy(GameSession.Cells, _cells, _cells.Length);
 		RenderAll();
 		ApplyHighlights();
-		GameSession.Difficulty = difficulty;
-		GameSession.ActiveBoard = _game;
-		GameSession.Cells = (CellData[])_cells.Clone();
-		GameSession.SelectedIndex = -1;
 	}
 
 	/// <summary>Counts of each digit (1-9) currently on the board, indexed by value.</summary>
@@ -342,6 +340,55 @@ public partial class BoardView : Control
 		_grid.AddThemeConstantOverride("v_separation", Textures.BoxGap);
 	}
 
+	private void ApplyTileTheme()
+	{
+		if (_grid == null || Textures == null)
+		{
+			return;
+		}
+
+		_tileTheme.SetTypeVariation(TileValueType, "Label");
+		Font hintFont = Textures.HintFont ?? Textures.Font;
+		if (hintFont != null) _tileTheme.SetFont("font", "Label", hintFont);
+		if (Textures.Font != null) _tileTheme.SetFont("font", TileValueType, Textures.Font);
+		_grid.Theme = _tileTheme;
+	}
+
+	/// <summary>Font sizes are a fraction of the cell height, so follow the first tile's size.</summary>
+	private void OnFirstTileResized() => UpdateTileFonts(_tiles[0]?.Size.Y ?? 0);
+
+	/// <summary>
+	/// The cell height the grid's layout will produce, worked out from the square frame. Lets the fonts
+	/// be sized before any tile exists: resizing them afterwards re-measures every label on the board.
+	/// </summary>
+	private float EstimateCellHeight()
+	{
+		if (_frame == null || Textures == null) return 0;
+		float side = Mathf.Min(_frame.Size.X, _frame.Size.Y) - Textures.BoxGap * 2;
+		float box = (side - Textures.BoxGap * (BoardGeometry.BoxSize - 1)) / BoardGeometry.BoxSize;
+		return (box - Textures.CellGap * (BoardGeometry.BoxSize - 1)) / BoardGeometry.BoxSize;
+	}
+
+	private void UpdateTileFonts(float cellHeight)
+	{
+		if (Textures == null || cellHeight <= 0)
+		{
+			return;
+		}
+
+		int valueSize = Textures.ValueFontSize(cellHeight);
+		int hintSize = Textures.HintFontSize(cellHeight);
+		if (valueSize == _valueFontSize && hintSize == _hintFontSize)
+		{
+			return;
+		}
+
+		_valueFontSize = valueSize;
+		_hintFontSize = hintSize;
+		_tileTheme.SetFontSize("font_size", TileValueType, valueSize);
+		_tileTheme.SetFontSize("font_size", "Label", hintSize);
+	}
+
 	private void ApplyBoardFrame()
 	{
 		if (Textures == null)
@@ -363,7 +410,11 @@ public partial class BoardView : Control
 		}
 	}
 
-	private void BuildBoard()
+	/// <summary>
+	/// Builds the 3x3 grid of boxes. When <paramref name="sliced"/>, yields to the next frame whenever
+	/// <see cref="BuildBudgetMs"/> is spent; without it, completes synchronously.
+	/// </summary>
+	private async Task BuildBoardAsync(bool sliced)
 	{
 		if (_grid == null || TileScene == null)
 		{
@@ -377,6 +428,16 @@ public partial class BoardView : Control
 
 		_grid.Columns = BoardGeometry.BoxSize;
 		int cellGap = Textures?.CellGap ?? 1;
+		var clock = Stopwatch.StartNew();
+
+		if (sliced)
+		{
+			// Let the empty frame lay out first, so the estimate below has a real size to work from.
+			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			if (!IsInstanceValid(this) || !IsInsideTree()) return;
+			clock.Restart();
+		}
+		UpdateTileFonts(EstimateCellHeight());
 
 		for (int boxRow = 0; boxRow < BoardGeometry.BoxSize; boxRow++)
 		{
@@ -396,13 +457,32 @@ public partial class BoardView : Control
 						var tile = TileScene.Instantiate<Tile>();
 						tile.Index = index;
 						tile.Textures = Textures;
+						tile.Data = _cells[index];
+						tile.Highlight = HighlightFor(index);
 						tile.Pressed += OnTilePressed;
 						box.AddChild(tile);
 						_tiles[index] = tile;
+
+						if (sliced && clock.Elapsed.TotalMilliseconds > BuildBudgetMs)
+						{
+							await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+							if (!IsInstanceValid(this) || !IsInsideTree()) return;
+							clock.Restart();
+						}
 					}
 				}
 			}
 		}
+
+		// Containers pass through transient sizes while tiles are being added. Following those would
+		// re-size every font several times, so only track resizes once the board has settled.
+		if (sliced)
+		{
+			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			if (!IsInstanceValid(this) || !IsInsideTree()) return;
+		}
+		_tiles[0].Resized += OnFirstTileResized;
+		OnFirstTileResized();
 	}
 
 	private static GridContainer CreateBox(int cellGap)

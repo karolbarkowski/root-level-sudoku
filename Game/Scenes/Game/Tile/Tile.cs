@@ -85,7 +85,6 @@ public partial class Tile : Control
 			_textures = value;
 			RefreshVisuals();
 			RefreshHighlight();
-			RefreshFonts();
 		}
 	}
 
@@ -116,10 +115,8 @@ public partial class Tile : Control
 	public override void _Ready()
 	{
 		CacheNodes();
-		Resized += RefreshFonts;
 		RefreshVisuals();
 		RefreshHighlight();
-		RefreshFonts();
 	}
 
 	public override void _GuiInput(InputEvent @event)
@@ -200,7 +197,7 @@ public partial class Tile : Control
 		}
 
 		// Pencil marks only render in an empty cell.
-		_hintsGrid.Visible = !hasValue;
+		bool anyHint = false;
 		for (int i = 0; i < _hintLabels.Length; i++)
 		{
 			Label label = _hintLabels[i];
@@ -210,12 +207,17 @@ public partial class Tile : Control
 			}
 
 			bool present = !hasValue && (_data?.HasHint(i + 1) ?? false);
+			anyHint |= present;
 			label.Text = present ? (i + 1).ToString() : string.Empty;
 			if (present && _textures != null)
 			{
 				label.AddThemeColorOverride("font_color", _highlight == TileHighlight.Selected ? _textures.GivenColor : _textures.HintColor);
 			}
 		}
+
+		// Hidden unless it has marks to show: a visible grid of nine empty labels still costs a
+		// layout pass per tile, and most cells never get notes.
+		_hintsGrid.Visible = anyHint;
 	}
 
 	private void RefreshHighlight()
@@ -241,40 +243,5 @@ public partial class Tile : Control
 		}
 
 		_highlightRect.Visible = true;
-	}
-
-	/// <summary>
-	/// Applies the font family and size from the texture set. Size is a fraction of the current
-	/// cell height, so this is re-run whenever the tile resizes (via the <c>Resized</c> signal).
-	/// </summary>
-	private void RefreshFonts()
-	{
-		if (!_nodesReady || _textures == null)
-		{
-			return;
-		}
-
-		float cellHeight = Size.Y;
-		ApplyFont(_valueLabel, _textures.Font, _textures.ValueFontSize(cellHeight));
-		Font hintFont = _textures.HintFont ?? _textures.Font;
-		for (int i = 0; i < _hintLabels.Length; i++)
-		{
-			ApplyFont(_hintLabels[i], hintFont, _textures.HintFontSize(cellHeight));
-		}
-	}
-
-	private static void ApplyFont(Label label, Font font, int fontSize)
-	{
-		if (label == null)
-		{
-			return;
-		}
-
-		if (font != null)
-		{
-			label.AddThemeFontOverride("font", font);
-		}
-
-		label.AddThemeFontSizeOverride("font_size", fontSize);
 	}
 }

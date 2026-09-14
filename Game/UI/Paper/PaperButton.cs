@@ -22,6 +22,7 @@ public partial class PaperButton : Button
     private float _entryOffset;
     private float _entryScale = 1;
     private bool _touchInput;
+    private bool _held;
     private readonly StyleBoxFlat _surface = new() { CornerRadiusTopLeft = 14, CornerRadiusTopRight = 14, CornerRadiusBottomLeft = 14, CornerRadiusBottomRight = 14 };
 
     public override void _Input(InputEvent input)
@@ -43,6 +44,32 @@ public partial class PaperButton : Button
         _entryOffset = EntryRise;
         _entryScale = .96f;
         QueueRedraw();
+    }
+
+    /// <summary>How far the button sinks as it leaves.</summary>
+    private const float ExitSink = 12;
+
+    /// <summary>Sinks and shrinks slightly; the caller fades the row. The caller owns the stagger.</summary>
+    public void PlayExit(double delay, double duration)
+    {
+        _entry?.Kill();
+        if (!UiAnimationSettings.Default.Enabled) return;
+        _entry = CreateTween().SetParallel().SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.In);
+        _entry.TweenMethod(Callable.From<float>(v => { _entryOffset = v; QueueRedraw(); }), _entryOffset, ExitSink, duration).SetDelay(delay);
+        _entry.TweenMethod(Callable.From<float>(v => { _entryScale = v; QueueRedraw(); }), _entryScale, .98f, duration).SetDelay(delay);
+    }
+
+    /// <summary>Keeps the highlight on after release, marking this as the choice that was made.</summary>
+    public void HoldHighlight()
+    {
+        _held = true;
+        Animate();
+    }
+
+    public void ReleaseHighlight()
+    {
+        _held = false;
+        Animate();
     }
 
     /// <summary>Rises into place. The caller owns the stagger; this only knows its own slot.</summary>
@@ -82,7 +109,7 @@ public partial class PaperButton : Button
     private void Animate()
     {
         _feedback?.Kill();
-        float highlight = !Disabled && ((!_touchInput && (_hovered || HasFocus())) || IsPressed()) ? 1 : 0;
+        float highlight = !Disabled && ((!_touchInput && (_hovered || HasFocus())) || IsPressed() || _held) ? 1 : 0;
         float depression = !Disabled && IsPressed() ? 1 : 0;
         if (!UiAnimationSettings.Default.Enabled)
         {

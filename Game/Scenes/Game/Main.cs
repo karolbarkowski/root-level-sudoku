@@ -9,7 +9,7 @@ public enum InputMode { Value, Hints }
 
 /// <summary>Coordinates the reusable board, paper actions and digit keys on a portrait sheet.</summary>
 [Tool]
-public partial class Main : Control
+public partial class Main : Control, ITransitionScreen
 {
     [Export] public PackedScene NumberButtonScene { get; set; }
     [Export] public ButtonGroup NumberSelection { get; set; }
@@ -25,17 +25,35 @@ public partial class Main : Control
     private bool _leaving;
     private bool _previousBack;
     private readonly NumberButton[] _keys = new NumberButton[9];
-    private GenerationOverlay _generationOverlay;
-    private Task<Board> _generationTask;
-    private int _generationToken;
-    private bool _generating;
+
+    // The sheet's sections, top to bottom, and where each one enters from (design units).
+    private static readonly string[] SectionNames = { "Navigation", "BoardArea", "Actions", "NumberBar" };
+    private static readonly float[] EntryShift = { -10, 14, 20, 20 };
+    private const int BoardSection = 1;
+    private const float EntryDuration = .35f;
+    private const float EntryStagger = .06f;
+    private const float ExitDuration = .2f;
+    private const float ExitStagger = .03f;
+    private const float ExitSink = 10;
+    private readonly Control[] _sections = new Control[SectionNames.Length];
+    private readonly float[] _sectionY = new float[SectionNames.Length];
+    private readonly float[] _sectionShift = new float[SectionNames.Length];
+
+    public override void _EnterTree()
+    {
+        // SceneTransition generates the puzzle before this scene exists. Launching the scene on its
+        // own (F6) has no transition, so generate here, before the board's _Ready reads the session.
+        if (!Engine.IsEditorHint() && !GameSession.HasPuzzle)
+            GameSession.Start(SudokuGenerator.Generate(GameSession.Difficulty), GameSession.Difficulty);
+    }
 
     public override void _Ready()
     {
         _sheet = GetNode<Control>("%Sheet");
+        for (int i = 0; i < SectionNames.Length; i++)
+            _sections[i] = _sheet.GetNode<Control>(SectionNames[i]);
         _board = GetNode<BoardView>("%Board");
         _notes = GetNode<PaperIconButton>("%ModeToggle");
-        _generationOverlay = GetNode<GenerationOverlay>("%GenerationOverlay");
         _undo = GetNode<PaperIconButton>("%UndoButton");
         _redo = GetNode<PaperIconButton>("%RedoButton");
         GetNode<Label>("%Difficulty").Text = GameSession.Difficulty.ToString().ToUpperInvariant();
@@ -60,15 +78,11 @@ public partial class Main : Control
         Resized += Layout;
         Layout();
         SetNotes(GameSession.NotesMode);
-        if (!Engine.IsEditorHint() && !GameSession.HasPuzzle)
-            BeginGeneration(GameSession.Difficulty);
-        if (!Engine.IsEditorHint())
-        {
-            _previousBack = GetTree().QuitOnGoBack;
-            GetTree().QuitOnGoBack = false;
-            if (GameSession.HasPuzzle)
-                PlayEntry();
-        }
+        if (Engine.IsEditorHint()) return;
+        _previousBack = GetTree().QuitOnGoBack;
+        GetTree().QuitOnGoBack = false;
+        PrepareEntry();
+        if (!SceneTransition.IsTransitioning) RevealWithoutTransition();
     }
 
     private void Layout()
@@ -84,16 +98,24 @@ public partial class Main : Control
         _sheet.Size = new Vector2(476, height);
         _sheet.Scale = Vector2.One * scale;
         _sheet.Position = new Vector2((Size.X - 476 * scale) / 2, 32 * scale);
-        void Place(string path, float y, float h)
+        void Place(int section, float y, float h)
         {
-            var control = _sheet.GetNode<Control>(path);
-            control.Position = new Vector2(0, y);
+            var control = _sections[section];
+            _sectionY[section] = y;
+            control.Position = new Vector2(0, y + _sectionShift[section]);
             control.Size = new Vector2(476, h);
         }
-        Place("Navigation", 0, 64);
-        Place("BoardArea", (64 + height - 328 - 476) / 2, 476);
-        Place("Actions", height - 328, 88);
-        Place("NumberBar", height - 220, 220);
+        Place(0, 0, 64);
+        Place(1, (64 + height - 328 - 476) / 2, 476);
+        Place(2, height - 328, 88);
+        Place(3, height - 220, 220);
+    }
+
+    /// <summary>Animated offset on top of the laid-out position, so a resize mid-animation keeps both.</summary>
+    private void SetSectionShift(int section, float shift)
+    {
+        _sectionShift[section] = shift;
+        _sections[section].Position = new Vector2(0, _sectionY[section] + shift);
     }
 
     // Assembly reloads do not necessarily rerun _Ready or emit Resized in the 2D editor.
@@ -102,9 +124,6 @@ public partial class Main : Control
     {
         if (Engine.IsEditorHint() && IsNodeReady() && IsInstanceValid(_sheet) && Size.X > 0 && Size.Y > 0)
             Layout();
-
-        if (!_generating || _generationTask == null || !_generationTask.IsCompleted) return;
-        FinishGeneration(_generationTask, _generationToken);
     }
 
     private void SetNotes(bool enabled)
@@ -120,7 +139,7 @@ public partial class Main : Control
 
     private void EnterNumber(int number)
     {
-        if (_generating || !_board.CanEdit) return;
+        if (!_board.CanEdit) return;
         _activeDigit = number;
         if (_notes.ButtonPressed)
             _board.ToggleSelectedHint(number);
@@ -167,9 +186,8 @@ public partial class Main : Control
         _lastSelectedIndex = _board.SelectedIndex;
         _lastSelectedValue = selectedValue;
         int[] counts = _board.GetValueCounts();
-        _undo.Disabled = _generating || !_board.CanUndo;
-        _redo.Disabled = _generating || !_board.CanRedo;
-        _notes.Disabled = _generating;
+        _undo.Disabled = !_board.CanUndo;
+        _redo.Disabled = !_board.CanRedo;
         _undo.RefreshFeedback();
         _redo.RefreshFeedback();
         // Keep keys available: nine occurrences do not guarantee nine correct placements.
@@ -188,54 +206,14 @@ public partial class Main : Control
     public void BackToMenu()
     {
         if (_leaving || Engine.IsEditorHint()) return;
-        _leaving = true;
-        var error = GetTree().ChangeSceneToFile("res://Scenes/StartScreen/StartScreen.tscn");
-        if (error != Error.Ok) { _leaving = false; GD.PushError($"Cannot open menu: {error}"); }
-    }
-
-    private void BeginGeneration(SudokuGenerator.Difficulty difficulty)
-    {
-        _generating = true;
-        _board.Visible = false;
-        _generationOverlay.Visible = true;
-        _generationOverlay.Modulate = Colors.White;
-        _sheet.GetNode<Control>("Navigation").Visible = false;
-        _sheet.GetNode<Control>("Actions").Visible = false;
-        _sheet.GetNode<Control>("NumberBar").Visible = false;
-        _notes.Disabled = true;
-        _undo.Disabled = true;
-        _redo.Disabled = true;
-        foreach (NumberButton key in _keys)
-            if (key != null) key.Disabled = true;
-
-        int token = ++_generationToken;
-        _generationTask = Task.Run(() => SudokuGenerator.Generate(difficulty));
-    }
-
-    private void FinishGeneration(Task<Board> task, int token)
-    {
-        _generating = false;
-        _generationTask = null;
-        if (_leaving || token != _generationToken || task.IsCanceled || task.IsFaulted)
-        {
-            if (task.IsFaulted) GD.PushError($"Puzzle generation failed: {task.Exception?.GetBaseException().Message}");
-            return;
-        }
-
-        _board.InstallGeneratedGame(task.Result, GameSession.Difficulty);
-        _board.Visible = true;
-        _sheet.GetNode<Control>("Navigation").Visible = true;
-        _sheet.GetNode<Control>("Actions").Visible = true;
-        _sheet.GetNode<Control>("NumberBar").Visible = true;
-        _generationOverlay.HideAnimated();
-        Refresh();
-        PlayEntry();
+        _leaving = SceneTransition.GoTo(SceneTransition.StartScreenPath);
     }
 
     private void OnSolved()
     {
+        if (_leaving) return;
         GameSession.Clear();
-        GetTree().ChangeSceneToFile("res://Scenes/Summary/Summary.tscn");
+        _leaving = SceneTransition.GoTo(SceneTransition.SummaryPath);
     }
 
     public override void _Notification(int what)
@@ -253,25 +231,71 @@ public partial class Main : Control
         GetViewport().SetInputAsHandled();
     }
 
-    private async void PlayEntry()
+    /// <summary>Parks every section just off its resting place, drawn but invisible.</summary>
+    private void PrepareEntry()
     {
         if (!UiAnimationSettings.Default.Enabled) return;
-        var column = _sheet;
-        foreach (Control child in column.GetChildren()) child.Modulate = new Color(1,1,1,.001f);
-        await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
-        if (!IsInsideTree()) return;
-        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-        if (!IsInsideTree() || _leaving) return;
+        _entry?.Kill();
+        for (int i = 0; i < _sections.Length; i++)
+        {
+            // Near-zero alpha keeps drawing active to warm fonts/textures without a visible flash.
+            _sections[i].Modulate = new Color(1, 1, 1, .001f);
+            SetSectionShift(i, EntryShift[i]);
+        }
+        // Fading the board fades its overlapping layers (grid colour, boxes, tiles) one by one, so they
+        // bleed through each other and the board looks muddy. Behind a transition it stays opaque and
+        // the lifting cover provides the fade; it only moves. (It does not scale either: mid-scale, the
+        // one-pixel cell rules fall between pixels and flicker.)
+        if (SceneTransition.IsTransitioning) _sections[BoardSection].Modulate = Colors.White;
+    }
+
+    public async Task PrepareRevealAsync()
+    {
+        await _board.WhenBuilt;
+        if (IsInstanceValid(this) && IsInsideTree()) Refresh();
+    }
+
+    public void PlayEntry()
+    {
+        if (!UiAnimationSettings.Default.Enabled || _leaving) return;
+        _entry?.Kill();
         _entry = CreateTween().SetParallel().SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
-        int i = 0;
-        foreach (Control child in column.GetChildren())
-            _entry.TweenProperty(child, "modulate:a", 1f, .3).SetDelay(i++ * .055);
+        for (int i = 0; i < _sections.Length; i++)
+        {
+            int section = i;
+            double delay = i * EntryStagger;
+            _entry.TweenProperty(_sections[i], "modulate:a", 1f, EntryDuration).SetDelay(delay);
+            _entry.TweenMethod(Callable.From<float>(v => SetSectionShift(section, v)), _sectionShift[i], 0f, EntryDuration).SetDelay(delay);
+        }
+    }
+
+    public async Task PlayExitAsync()
+    {
+        if (!UiAnimationSettings.Default.Enabled) return;
+        _entry?.Kill();
+        _entry = CreateTween().SetParallel().SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.In);
+        for (int i = 0; i < _sections.Length; i++)
+        {
+            int section = i;
+            double delay = i * ExitStagger;
+            // The board stays opaque (see PrepareEntry); the cover fades in over it.
+            if (i != BoardSection) _entry.TweenProperty(_sections[i], "modulate:a", 0f, ExitDuration).SetDelay(delay);
+            _entry.TweenMethod(Callable.From<float>(v => SetSectionShift(section, v)), _sectionShift[i], ExitSink, ExitDuration).SetDelay(delay);
+        }
+        await ToSignal(GetTree().CreateTimer(ExitDuration + (_sections.Length - 1) * ExitStagger), SceneTreeTimer.SignalName.Timeout);
+    }
+
+    /// <summary>Launched directly (e.g. F6), there is no cover to wait behind.</summary>
+    private async void RevealWithoutTransition()
+    {
+        await PrepareRevealAsync();
+        if (!IsInstanceValid(this) || !IsInsideTree()) return;
+        await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+        if (IsInstanceValid(this) && IsInsideTree()) PlayEntry();
     }
 
     public override void _ExitTree()
     {
-        ++_generationToken;
-        _generating = false;
         Resized -= Layout;
         _entry?.Kill();
         if (!Engine.IsEditorHint()) GetTree().QuitOnGoBack = _previousBack;

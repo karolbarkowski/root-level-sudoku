@@ -13,6 +13,13 @@ public partial class PaperHero : Control
 		_entry.TweenProperty(this, "modulate:a", 1f, duration).SetDelay(delay);
 		_entry.TweenMethod(Callable.From<float>(v => { _progress = v; QueueRedraw(); }), 0f, 1f, duration).SetDelay(delay);
 	}
+	public void PlayExit(double delay, double duration)
+	{
+		_entry?.Kill();
+		_entry = CreateTween().SetParallel().SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.In);
+		_entry.TweenProperty(this, "modulate:a", 0f, duration).SetDelay(delay);
+		_entry.TweenMethod(Callable.From<float>(v => { _progress = v; QueueRedraw(); }), _progress, 0f, duration).SetDelay(delay);
+	}
 	public override void _ExitTree() => _entry?.Kill();
 	public override void _Draw()
 	{

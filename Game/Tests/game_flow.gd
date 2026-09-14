@@ -23,6 +23,15 @@ func snapshot(board: Node) -> Array:
         result.append([tile.Data.Value, tile.Data.IsGiven, Array(tile.Data.Hints)])
     return result
 
+func transition() -> Node:
+    return root.get_node("SceneTransition")
+
+# Waits out a scene transition, including the cover lifting and the entrance playing.
+func settle():
+    while transition().Busy:
+        await process_frame
+    await create_timer(.7).timeout
+
 func capture(label: String):
     await RenderingServer.frame_post_draw
     check(root.get_texture().get_image().save_png(output_dir.path_join(label + ".png")) == OK, "Screenshot failed")
@@ -36,12 +45,14 @@ func run():
     check(not current_scene.has_node("Hero/Nine"), "Title numeral should be removed")
     await capture("start")
     current_scene.get_node("Menu/Difficulties/Easy").emit_signal("pressed")
-    await create_timer(.2).timeout
-    if current_scene != null and current_scene.scene_file_path.ends_with("Main.tscn") and current_scene.get_node("%GenerationOverlay").visible:
-        await capture("generating")
-    await create_timer(1.5).timeout
+    check(transition().Busy, "Tapping a difficulty starts the transition immediately")
+    await create_timer(.45).timeout
+    check(transition().get_node("Overlay").visible, "Loading message covers the scene change")
+    await capture("generating")
+    await settle()
+    check(current_scene.scene_file_path.ends_with("Main.tscn"), "Game scene opens after generation")
     var board = current_scene.get_node("%Board")
-    check(not current_scene.get_node("%GenerationOverlay").visible, "Generation overlay exits after the puzzle is ready")
+    check(not transition().get_node("Overlay").visible, "Transition cover lifts after the puzzle is ready")
     check(board.visible, "Generated board becomes visible after loading")
     var empty = []
     for tile in tiles(board):
@@ -116,11 +127,11 @@ func run():
         check(board.Textures.CellGap * board.get_global_transform_with_canvas().get_scale().x >= .9, "Cell rules stay visible at narrow sizes")
         await capture("game-%dx%d" % [size.x,size.y])
     current_scene.get_node("%BackButton").emit_signal("pressed")
-    await create_timer(1.1).timeout
+    await settle()
     check(current_scene.get_node("Resume").visible, "Resume is visible after returning")
     await capture("resume")
     current_scene.get_node("Resume").emit_signal("pressed")
-    await create_timer(1.1).timeout
+    await settle()
     board = current_scene.get_node("%Board")
     check(snapshot(board) == before, "Values, clues and pencil marks survive menu round trip")
     check(board.SelectedIndex == selected, "Selection restored")
@@ -133,15 +144,15 @@ func run():
         if tile.Index == selected:
             check(Array(tile.Data.Hints).is_empty(), "Keyboard erase clears pencil marks")
     current_scene.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
-    await create_timer(1.1).timeout
+    await settle()
     check(current_scene.scene_file_path.ends_with("StartScreen.tscn"), "Android back returns to menu")
     current_scene.get_node("Menu/Difficulties/Easy").emit_signal("pressed")
-    await create_timer(1.1).timeout
+    await settle()
     board = current_scene.get_node("%Board")
     check(not board.CanUndo, "New puzzle starts with fresh history")
     check(not current_scene.get_node("%ModeToggle").button_pressed, "New puzzle resets notes mode")
     board.emit_signal("Solved")
-    await create_timer(.3).timeout
+    await settle()
     check(current_scene.scene_file_path.ends_with("Summary.tscn"), "Completion navigates to summary")
     change_scene_to_file("res://Scenes/StartScreen/StartScreen.tscn")
     await create_timer(1.1).timeout

@@ -5,8 +5,6 @@ namespace SudokuEndless;
 /// <summary>Settings view. Empty for now apart from a Back button returning to the start screen.</summary>
 public partial class Settings : Control
 {
-	private const string StartScreenPath = "res://Scenes/StartScreen/StartScreen.tscn";
-
 	public override void _Ready()
 	{
 		Button back = GetNodeOrNull<Button>("%BackButton");
@@ -16,5 +14,5 @@ public partial class Settings : Control
 		}
 	}
 
-	private void OnBack() => GetTree().ChangeSceneToFile(StartScreenPath);
+	private void OnBack() => SceneTransition.GoTo(SceneTransition.StartScreenPath);
 }

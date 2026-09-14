@@ -20,7 +20,7 @@ Resources/default_tile_textures.tres.
 - PaperMenu.tscn / PaperFooter.tscn: difficulty and navigation composition.
 - PaperButton.tscn: reusable rounded text button, including the continue action.
 - PaperIconButton.tscn: reusable animated back, undo, redo and notes icons.
-- GenerationOverlay.tscn: full-screen loading state with an animated vector spinner.
+- GenerationOverlay.tscn: the scene-transition cover, with an optional message and animated spinner.
 - NumberButton.tscn: bottom-aligned digit bar with remaining count; selection animates
   height and orange fill over 220 ms. Disabled animation settings apply immediately.
 
@@ -29,12 +29,13 @@ with the board centered in between. Entry animations finish within one second.
 GameSession retains the live puzzle and value-move history across scene changes;
 it does not persist across application restarts.
 
-Fresh puzzles are generated on a worker task after the game scene has entered. The
-GenerationOverlay blocks input and shows an animated orange spinner while the pure
-managed generator runs. The completed Board is installed on the Godot thread, the
-overlay fades away, and the existing game controls enter in a short stagger. Resume
-loads immediately because it already has a Board. Leaving during generation invalidates
-the request so a late result cannot affect a later scene.
+Every scene change goes through the SceneTransition autoload (UI/Transition). The
+outgoing scene plays its exit while a cover fades in; the next scene loads on a worker
+thread while a fresh puzzle is generated on a worker task, with the GenerationOverlay's
+message and spinner on the cover. The new scene is swapped in under the cover, the board
+builds its tiles over several frames, and the cover lifts as the game controls enter in a
+short stagger. The previous scene is freed piecemeal afterwards. Scenes take part through
+ITransitionScreen; Resume skips generation because it already has a Board.
 
 ## Verification
 Build Game/sudoku.csproj, then run Godot with --path Game and one of:

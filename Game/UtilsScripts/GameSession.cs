@@ -18,4 +18,22 @@ public static class GameSession
 		SelectedIndex = -1;
 		NotesMode = false;
 	}
+
+	/// <summary>
+	/// Installs a freshly generated board; its non-empty cells become the clues. Call on the Godot
+	/// thread — <see cref="CellData"/> is a Resource.
+	/// </summary>
+	public static void Start(Board board, SudokuGenerator.Difficulty difficulty)
+	{
+		var cells = new CellData[BoardGeometry.CellCount];
+		for (int i = 0; i < cells.Length; i++)
+		{
+			int value = board[BoardGeometry.RowOf(i), BoardGeometry.ColOf(i)];
+			cells[i] = new CellData { Value = value, IsGiven = value != 0 };
+		}
+		Clear();
+		Difficulty = difficulty;
+		ActiveBoard = board;
+		Cells = cells;
+	}
 }

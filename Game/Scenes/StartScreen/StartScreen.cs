@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Godot;
 using Generators.Sudoku;
 using Sudoku;
 
 namespace SudokuEndless;
 
-public partial class StartScreen : Control
+public partial class StartScreen : Control, ITransitionScreen
 {
 	[ExportGroup("Entrance")]
 
@@ -17,6 +18,11 @@ public partial class StartScreen : Control
 	[Export] public float TitleDelay { get; set; }
 
 	[Export] public float TitleDuration { get; set; } = .3f;
+
+	[ExportGroup("Exit")]
+
+	/// <summary>Whole exit cascade. The transition cover starts fading in partway through.</summary>
+	[Export] public float ExitDuration { get; set; } = .25f;
 
 	/// <summary>Share of <see cref="MenuDuration"/> one row spends moving; the rest is stagger.</summary>
 	private const float MenuRowShare = .6f;
@@ -37,6 +43,7 @@ public partial class StartScreen : Control
 	private bool _leaving;
 	private Tween _entry;
 	private PaperButton _resume;
+	private PaperButton _chosen;
 	public override void _Ready()
 	{
 		// The game is portrait-only. Keep one logical poster for desktop and Android.
@@ -48,7 +55,7 @@ public partial class StartScreen : Control
 		_menu = GetNode<VBoxContainer>("Menu");
 		_resume = GetNode<PaperButton>("Resume");
 		_resume.Visible = GameSession.HasPuzzle;
-		_resume.Pressed += () => Navigate("res://Scenes/Game/Main.tscn", resume: true);
+		_resume.Pressed += () => Navigate(_resume, SceneTransition.GamePath, resume: true);
 		_menu.GetNode<Label>("Heading/Caption").Text = GameSession.HasPuzzle ? "START A NEW PUZZLE" : "CHOOSE YOUR DIFFICULTY";
 		var rows = _menu.GetNode<VBoxContainer>("Difficulties");
 		var scene = GD.Load<PackedScene>("res://UI/Paper/PaperButton.tscn");
@@ -59,14 +66,16 @@ public partial class StartScreen : Control
 			button.Caption = difficulty.ToString();
 			button.Index = ((int)difficulty).ToString("00");
 			button.Name = difficulty.ToString();
-			button.Pressed += () => Navigate("res://Scenes/Game/Main.tscn", difficulty);
+			button.Pressed += () => Navigate(button, SceneTransition.GamePath, difficulty);
 			rows.AddChild(button);
 		}
-		_menu.GetNode<PaperButton>("Footer/Settings").Pressed += () => Navigate("res://Scenes/Settings/Settings.tscn");
-		_menu.GetNode<PaperButton>("Footer/Quit").Pressed += () => Navigate(null);
+		var settings = _menu.GetNode<PaperButton>("Footer/Settings");
+		settings.Pressed += () => Navigate(settings, SceneTransition.SettingsPath);
+		var quit = _menu.GetNode<PaperButton>("Footer/Quit");
+		quit.Pressed += () => Navigate(quit, null);
 		Resized += Layout;
 		Layout();
-		PlayEntry();
+		if (!SceneTransition.IsTransitioning) PlayEntryWithoutTransition();
 		// Keep every button neutral until the player uses the pointer or keyboard.
 	}
 
@@ -93,56 +102,104 @@ public partial class StartScreen : Control
 		_menu.Size = new Vector2(column, MenuHeight);
 		_menu.Scale = Vector2.One * scale;
 	}
-	/// <summary>
-	/// The title slides into place while the menu rises row by row.
-	/// </summary>
-	private async void PlayEntry()
+	/// <summary>One slot per menu row. The spacer has nothing to show, so it does not take a slot.</summary>
+	private List<Control> Rows()
 	{
-		if (!UiAnimationSettings.Default.Enabled) return;
-		var hero = (PaperHero)_hero;
-
-		// One slot per menu row. The spacer has nothing to show, so it does not take a slot.
-		var targets = new List<Control>();
-		if (_resume.Visible) targets.Add(_resume);
+		var rows = new List<Control>();
+		if (_resume.Visible) rows.Add(_resume);
 		foreach (Node child in _menu.GetChildren())
 		{
 			if (child.Name == "Difficulties")
-				foreach (Control row in child.GetChildren()) targets.Add(row);
-			else if (child is Control control && control.Name != "Space") targets.Add(control);
+				foreach (Control row in child.GetChildren()) rows.Add(row);
+			else if (child is Control control && control.Name != "Space") rows.Add(control);
 		}
+		return rows;
+	}
+
+	/// <summary>Parks the title and every row in their pre-entrance state: drawn, but invisible.</summary>
+	private void PrepareEntry()
+	{
+		foreach (Control row in Rows())
+		{
+			// Near-zero alpha keeps drawing active to warm fonts/textures without a visible flash.
+			row.Modulate = new Color(1, 1, 1, .001f);
+			foreach (PaperButton button in ButtonsOf(row)) button.PrepareEntrance();
+		}
+		((PaperHero)_hero).PrepareEntrance();
+	}
+
+	public Task PrepareRevealAsync()
+	{
+		if (UiAnimationSettings.Default.Enabled) PrepareEntry();
+		return Task.CompletedTask;
+	}
+
+	/// <summary>
+	/// The title slides into place while the menu rises row by row.
+	/// </summary>
+	public void PlayEntry()
+	{
+		if (!UiAnimationSettings.Default.Enabled || _leaving) return;
+		List<Control> rows = Rows();
 
 		// Rows overlap: one row's travel plus the whole stagger has to fit inside MenuDuration.
 		double rowDuration = MenuDuration * MenuRowShare;
-		double step = targets.Count > 1 ? (MenuDuration - rowDuration) / (targets.Count - 1) : 0;
+		double step = rows.Count > 1 ? (MenuDuration - rowDuration) / (rows.Count - 1) : 0;
 
-		foreach (Control target in targets)
+		_entry?.Kill();
+		_entry = CreateTween().SetParallel();
+		for (int i = 0; i < rows.Count; i++)
 		{
-			// Near-zero alpha keeps drawing active to warm fonts/textures without a visible flash.
-			target.Modulate = new Color(1, 1, 1, .001f);
-			foreach (PaperButton button in ButtonsOf(target)) button.PrepareEntrance();
+			Control row = rows[i];
+			double delay = i * step;
+			// Only PaperButtons can offset themselves past their container, so the plain rows
+			// (rules, headings, hint) arrive on alpha alone.
+			foreach (PaperButton button in ButtonsOf(row)) button.PlayEntrance(delay, rowDuration);
+			_entry.TweenProperty(row, "modulate:a", 1f, rowDuration)
+				.SetDelay(delay).SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
 		}
-		hero.PrepareEntrance();
+
+		((PaperHero)_hero).PlayTitle(TitleDelay, TitleDuration);
+	}
+
+	/// <summary>Launched directly (the app's first screen), there is no cover to wait behind.</summary>
+	private async void PlayEntryWithoutTransition()
+	{
+		if (!UiAnimationSettings.Default.Enabled) return;
+		PrepareEntry();
 
 		// Do not spend the animation budget loading the initial GPU frame.
 		// Start on the following process frame, once the prepared screen has been drawn.
 		await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
-		if (!IsInsideTree()) return;
+		if (!IsInstanceValid(this) || !IsInsideTree()) return;
 		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-		if (!IsInsideTree() || _leaving) return;
+		if (!IsInstanceValid(this) || !IsInsideTree()) return;
+		PlayEntry();
+	}
 
-		_entry = CreateTween().SetParallel();
-		for (int i = 0; i < targets.Count; i++)
+	/// <summary>
+	/// Rows sink away from the bottom up while the title slides back out. The chosen row keeps its
+	/// highlight and leaves last, so the tap reads as the cause of what follows.
+	/// </summary>
+	public async Task PlayExitAsync()
+	{
+		if (!UiAnimationSettings.Default.Enabled) return;
+		List<Control> rows = Rows();
+		double rowDuration = ExitDuration * MenuRowShare;
+		double step = rows.Count > 1 ? (ExitDuration - rowDuration) / (rows.Count - 1) : 0;
+
+		_entry?.Kill();
+		_entry = CreateTween().SetParallel().SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.In);
+		for (int i = 0; i < rows.Count; i++)
 		{
-			Control target = targets[i];
-			double delay = i * step;
-			// Only PaperButtons can offset themselves past their container, so the plain rows
-			// (rules, headings, hint) arrive on alpha alone.
-			foreach (PaperButton button in ButtonsOf(target)) button.PlayEntrance(delay, rowDuration);
-			_entry.TweenProperty(target, "modulate:a", 1f, rowDuration)
-				.SetDelay(delay).SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
+			Control row = rows[rows.Count - 1 - i];
+			bool chosen = _chosen != null && (row == _chosen || _chosen.GetParent() == row);
+			double delay = chosen ? ExitDuration - rowDuration : i * step;
+			foreach (PaperButton button in ButtonsOf(row)) button.PlayExit(delay, rowDuration);
+			_entry.TweenProperty(row, "modulate:a", 0f, rowDuration).SetDelay(delay);
 		}
-
-		hero.PlayTitle(TitleDelay, TitleDuration);
+		((PaperHero)_hero).PlayExit(0, ExitDuration);
+		await ToSignal(GetTree().CreateTimer(ExitDuration), SceneTreeTimer.SignalName.Timeout);
 	}
 
 	/// <summary>The row itself when it is a button, plus any it wraps (the footer holds two).</summary>
@@ -153,27 +210,29 @@ public partial class StartScreen : Control
 			if (child is PaperButton nested) yield return nested;
 	}
 
-	private async void Navigate(string path, SudokuGenerator.Difficulty difficulty = SudokuGenerator.Difficulty.Easy, bool resume = false)
+	private async void Navigate(PaperButton source, string path, SudokuGenerator.Difficulty difficulty = SudokuGenerator.Difficulty.Easy, bool resume = false)
 	{
-		if (_leaving) return;
+		if (_leaving || SceneTransition.IsTransitioning) return;
 		_leaving = true;
-		if (UiAnimationSettings.Default.Enabled && path != null && !path.Contains("/Game/"))
-			await ToSignal(GetTree().CreateTimer(.10), SceneTreeTimer.SignalName.Timeout);
-		if (!IsInsideTree()) return;
-		if (path == null) { GetTree().Quit(); return; }
-		if (path != null && path.Contains("/Game/") && !resume)
+		_chosen = source;
+		source?.HoldHighlight();
+		if (path == null)
 		{
-			GameSession.Clear();
-			GameSession.Difficulty = difficulty;
+			if (UiAnimationSettings.Default.Enabled)
+				await ToSignal(GetTree().CreateTimer(.10), SceneTreeTimer.SignalName.Timeout);
+			if (IsInstanceValid(this) && IsInsideTree()) GetTree().Quit();
+			return;
 		}
-        // Route both new puzzles and resumed games through the lightweight handoff scene.
-        // Main.tscn still needs to build its board and controls, so loading it directly
-        // makes the start screen freeze before the first frame of gameplay is visible.
-        string destination = path != null && path.Contains("/Game/")
-            ? "res://Scenes/Game/Loading.tscn"
-            : path;
-		Error error = GetTree().ChangeSceneToFile(destination);
-		if (error != Error.Ok) { _leaving = false; GD.PushError($"Cannot open {path}: {error}"); }
+
+		bool started = path == SceneTransition.GamePath
+			? resume ? SceneTransition.GoTo(path, "LOADING BOARD") : SceneTransition.StartNewGame(difficulty)
+			: SceneTransition.GoTo(path);
+		if (!started)
+		{
+			_leaving = false;
+			_chosen = null;
+			source?.ReleaseHighlight();
+		}
 	}
 
 	public override void _ExitTree()
