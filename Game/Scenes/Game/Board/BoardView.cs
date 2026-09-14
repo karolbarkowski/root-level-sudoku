@@ -29,6 +29,10 @@ public partial class BoardView : Control
 	[Signal]
 	public delegate void SolvedEventHandler();
 
+	/// <summary>Emitted when the selected cell changes, carrying the user-entered value or 0.</summary>
+	[Signal]
+	public delegate void SelectionChangedEventHandler(int value);
+
 	/// <summary>The Tile scene instanced once per cell.</summary>
 	[Export]
 	public PackedScene TileScene { get; set; }
@@ -148,6 +152,7 @@ public partial class BoardView : Control
 		// reappear if the value is later erased or undone (rather than being lost).
 		_cells[_selectedIndex].Value = value;
 		RefreshTile(_selectedIndex);
+		EmitSignal(SignalName.SelectionChanged, SelectedUserValue);
 		EmitSignal(SignalName.BoardChanged);
 		CheckForCompletion();
 	}
@@ -188,6 +193,7 @@ public partial class BoardView : Control
 
 		SyncAllValues();
 		RenderAll();
+		EmitSignal(SignalName.SelectionChanged, SelectedUserValue);
 		EmitSignal(SignalName.BoardChanged);
 		return true;
 	}
@@ -202,6 +208,7 @@ public partial class BoardView : Control
 
 		SyncAllValues();
 		RenderAll();
+		EmitSignal(SignalName.SelectionChanged, SelectedUserValue);
 		EmitSignal(SignalName.BoardChanged);
 		CheckForCompletion();
 		return true;
@@ -413,12 +420,32 @@ public partial class BoardView : Control
 		_selectedIndex = index;
 		GameSession.SelectedIndex = index;
 		ApplyHighlights();
+		EmitSignal(SignalName.SelectionChanged, SelectedUserValue);
 		EmitSignal(SignalName.BoardChanged);
 	}
 
 	private void OnTilePressed(int index) => SelectCell(index);
 	public bool CanEdit => CanEditSelection();
 	public int SelectedIndex => _selectedIndex;
+	public int SelectedUserValue =>
+		_selectedIndex >= 0 && !_cells[_selectedIndex].IsGiven ? _cells[_selectedIndex].Value : 0;
+	public bool SelectedHasHint(int number) =>
+		_selectedIndex >= 0 && !_cells[_selectedIndex].IsGiven && _cells[_selectedIndex].IsEmpty &&
+		_cells[_selectedIndex].HasHint(number);
+	public bool SelectedHasNotes =>
+		_selectedIndex >= 0 && !_cells[_selectedIndex].IsGiven && _cells[_selectedIndex].IsEmpty &&
+		_cells[_selectedIndex].Hints.Length > 0;
+
+	/// <summary>Clears both the board highlight and the number-strip selection.</summary>
+	public void ClearSelection()
+	{
+		if (_selectedIndex < 0) return;
+		_selectedIndex = -1;
+		GameSession.SelectedIndex = -1;
+		ApplyHighlights();
+		EmitSignal(SignalName.SelectionChanged, 0);
+		EmitSignal(SignalName.BoardChanged);
+	}
 
 	private void ApplyHighlights()
 	{

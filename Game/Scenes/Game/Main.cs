@@ -15,10 +15,9 @@ public partial class Main : Control
     private PaperIconButton _notes;
     private PaperIconButton _undo;
     private PaperIconButton _redo;
-    private PaperIconButton _erase;
-    private bool _paused;
     private int _activeDigit;
-    private PaperIconButton _pause;
+    private int _lastSelectedIndex = -1;
+    private int _lastSelectedValue;
     private Tween _entry;
     private bool _leaving;
     private bool _previousBack;
@@ -31,15 +30,10 @@ public partial class Main : Control
         _notes = GetNode<PaperIconButton>("%ModeToggle");
         _undo = GetNode<PaperIconButton>("%UndoButton");
         _redo = GetNode<PaperIconButton>("%RedoButton");
-        _erase = GetNode<PaperIconButton>("%EraseButton");
-        _pause = GetNode<PaperIconButton>("%PauseButton");
-        _pause.Pressed += () => SetPaused(!_paused);
-        GetNode<Control>("%PausePanel").GetNode<PaperButton>("Resume").Pressed += () => SetPaused(false);
         GetNode<Label>("%Difficulty").Text = GameSession.Difficulty.ToString().ToUpperInvariant();
         GetNode<PaperIconButton>("%BackButton").Pressed += BackToMenu;
         _undo.Pressed += () => _board.Undo();
         _redo.Pressed += () => _board.Redo();
-        _erase.Pressed += () => _board.EraseSelected();
         _notes.SetPressedNoSignal(GameSession.NotesMode);
         _notes.Toggled += SetNotes;
         var grid = GetNode<GridContainer>("%NumberBar");
@@ -53,6 +47,7 @@ public partial class Main : Control
             _keys[n - 1] = key;
         }
         _board.BoardChanged += Refresh;
+        _board.SelectionChanged += OnSelectionChanged;
         _board.Solved += OnSolved;
         Resized += Layout;
         Layout();
@@ -111,46 +106,68 @@ public partial class Main : Control
 
     private void EnterNumber(int number)
     {
-        if (_paused || !_board.CanEdit) return;
+        if (!_board.CanEdit) return;
         _activeDigit = number;
-        if (_notes.ButtonPressed) _board.ToggleSelectedHint(number);
-        else _board.SetSelectedValue(number);
+        if (_notes.ButtonPressed)
+            _board.ToggleSelectedHint(number);
+        else if (_board.SelectedUserValue == number)
+            _board.EraseSelected();
+        else
+            _board.SetSelectedValue(number);
         Refresh();
+    }
+
+    private void OnSelectionChanged(int value)
+    {
+        _activeDigit = value;
+        Refresh();
+    }
+
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        Vector2 point;
+        bool pressed;
+        if (@event is InputEventMouseButton mouse && mouse.ButtonIndex == MouseButton.Left)
+        {
+            point = mouse.Position;
+            pressed = mouse.Pressed;
+        }
+        else if (@event is InputEventScreenTouch touch)
+        {
+            point = touch.Position;
+            pressed = touch.Pressed;
+        }
+        else return;
+
+        if (pressed && !_board.GetGlobalRect().HasPoint(point))
+            _board.ClearSelection();
     }
 
     private void Refresh()
     {
+        // A cell tap changes the selected index/value; a number tap keeps its active key while
+        // editing an empty cell.
+        int selectedValue = _board.SelectedUserValue;
+        if (_board.SelectedIndex != _lastSelectedIndex || selectedValue != _lastSelectedValue)
+            _activeDigit = selectedValue;
+        _lastSelectedIndex = _board.SelectedIndex;
+        _lastSelectedValue = selectedValue;
         int[] counts = _board.GetValueCounts();
-        _undo.Disabled = _paused || !_board.CanUndo;
-        _redo.Disabled = _paused || !_board.CanRedo;
-        _erase.Disabled = _paused || !_board.CanEdit;
-        _notes.Disabled = _paused;
+        _undo.Disabled = !_board.CanUndo;
+        _redo.Disabled = !_board.CanRedo;
         _undo.RefreshFeedback();
         _redo.RefreshFeedback();
-        _erase.RefreshFeedback();
         // Keep keys available: nine occurrences do not guarantee nine correct placements.
         foreach (var key in _keys)
         {
             if (key == null) continue;
             key.Remaining = Mathf.Max(0, 9 - counts[key.Number]);
-            key.Selected = key.Number == _activeDigit;
-            key.Disabled = _paused || !_board.CanEdit;
+            key.Selected = _notes.ButtonPressed
+                ? _board.SelectedHasHint(key.Number)
+                : _board.SelectedUserValue == key.Number;
+            key.Disabled = !_board.CanEdit;
             key.RefreshAvailability();
         }
-    }
-
-    public void SetPaused(bool paused)
-    {
-        _paused = paused;
-        _board.Visible = !paused;
-        GetNode<Control>("%PausePanel").Visible = paused;
-        _pause.Symbol = paused ? PaperIconButton.Glyph.Play : PaperIconButton.Glyph.Pause;
-        _pause.AccessibilityName = paused ? "Resume puzzle" : "Pause puzzle";
-        _pause.TooltipText = _pause.AccessibilityName;
-        _pause.QueueRedraw();
-        Refresh();
-        if (paused) GetNode<Control>("%PausePanel").GetNode<PaperButton>("Resume").GrabFocus();
-        else _pause.GrabFocus();
     }
 
     public void BackToMenu()
@@ -175,7 +192,6 @@ public partial class Main : Control
     public override void _UnhandledKeyInput(InputEvent @event)
     {
         if (@event is not InputEventKey key || !key.Pressed || key.Echo) return;
-        if (_paused) { if (key.Keycode == Key.Escape) SetPaused(false); return; }
         if (key.Keycode == Key.Escape) BackToMenu();
         else if (key.Keycode >= Key.Key1 && key.Keycode <= Key.Key9) EnterNumber((int)key.Keycode - (int)Key.Key0);
         else if (key.Keycode == Key.Backspace || key.Keycode == Key.Delete) _board.EraseSelected();

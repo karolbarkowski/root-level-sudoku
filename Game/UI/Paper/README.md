@@ -19,8 +19,7 @@ Resources/default_tile_textures.tres.
 - PaperHero.tscn: animated live title and subtitle.
 - PaperMenu.tscn / PaperFooter.tscn: difficulty and navigation composition.
 - PaperButton.tscn: reusable rounded text button, including the continue action.
-- PaperIconButton.tscn: reusable animated back, pause, undo, redo, erase and notes icons.
-- PausePanel.tscn: opaque puzzle cover with Resume.
+- PaperIconButton.tscn: reusable animated back, undo, redo and notes icons.
 - NumberButton.tscn: bottom-aligned digit bar with remaining count; selection animates
   height and orange fill over 220 ms. Disabled animation settings apply immediately.
 
@@ -36,5 +35,5 @@ Build Game/sudoku.csproj, then run Godot with --path Game and one of:
 - --script res://Tests/paper_entry.gd
 
 Captures are written under output/. Checks cover portrait sizes, selection animation,
-bottom alignment, pause, remaining counts, menu/continue, notes, undo/redo, and
+bottom alignment, remaining counts, menu/continue, notes, undo/redo, and
 new-game/completion behavior. Physical Android touch and safe areas require device testing.

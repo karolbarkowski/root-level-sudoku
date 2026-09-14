@@ -44,31 +44,54 @@ func run():
     check(empty.size() > 1, "Generated puzzle has editable cells")
     empty[0].emit_signal("Pressed", empty[0].Index)
     board.SetSelectedValue(4)
+    await create_timer(.28).timeout
+    check(current_scene.get_node("%NumberBar/Digit4").SelectionProgress > .9, "Filled user cell selects its number")
+    current_scene.get_node("%NumberBar/Digit4").emit_signal("NumberPressed", 4)
+    await create_timer(.28).timeout
+    check(board.SelectedUserValue == 0, "Tapping the selected value erases it")
+    current_scene.get_node("%NumberBar/Digit4").emit_signal("NumberPressed", 4)
+    await create_timer(.28).timeout
+    var given_index = -1
+    for tile in tiles(board):
+        if tile.Data.IsGiven:
+            given_index = tile.Index
+            break
+    board.SelectCell(given_index)
+    await create_timer(.28).timeout
+    check(current_scene.get_node("%NumberBar/Digit4").SelectionProgress < .1, "Clue cell clears number selection")
+    board.SelectCell(empty[1].Index)
+    await create_timer(.28).timeout
+    check(current_scene.get_node("%NumberBar/Digit4").SelectionProgress < .1, "Empty cell clears number selection")
+    board.ClearSelection()
+    await create_timer(.28).timeout
+    check(current_scene.get_node("%NumberBar/Digit4").SelectionProgress < .1, "Clearing board selection clears number selection")
+    empty[0].emit_signal("Pressed", empty[0].Index)
     empty[1].emit_signal("Pressed", empty[1].Index)
     current_scene.get_node("%ModeToggle").button_pressed = true
     current_scene.get_node("%NumberBar/Digit2").emit_signal("NumberPressed", 2)
     await create_timer(.3).timeout
     current_scene.get_node("%NumberBar/Digit7").emit_signal("NumberPressed", 7)
+    check(current_scene.get_node("%NumberBar/Digit2").Selected, "Notes mode selects the first pencil mark")
+    check(current_scene.get_node("%NumberBar/Digit7").Selected, "Notes mode supports multiple selected pencil marks")
+    current_scene.get_node("%NumberBar/Digit2").emit_signal("NumberPressed", 2)
+    await create_timer(.28).timeout
+    check(not current_scene.get_node("%NumberBar/Digit2").Selected, "Tapping a pencil mark toggles it off")
+    current_scene.get_node("%NumberBar/Digit2").emit_signal("NumberPressed", 2)
+    await create_timer(.28).timeout
+    current_scene.get_node("%NumberBar/Digit7").emit_signal("NumberPressed", 7)
+    await create_timer(.28).timeout
+    current_scene.get_node("%NumberBar/Digit7").emit_signal("NumberPressed", 7)
     await create_timer(.06).timeout
     var old_key = current_scene.get_node("%NumberBar/Digit2")
     var new_key = current_scene.get_node("%NumberBar/Digit7")
     check(new_key.SelectionProgress > 0 and new_key.SelectionProgress < 1, "Selected bar animates upward")
-    check(old_key.SelectionProgress > 0 and old_key.SelectionProgress < 1, "Previous bar animates downward")
+    check(is_equal_approx(old_key.SelectionProgress, 1), "Other selected notes remain selected")
     await create_timer(.25).timeout
     check(is_equal_approx(new_key.SelectionProgress, 1), "Selected bar reaches full height")
-    check(is_zero_approx(old_key.SelectionProgress), "Previous bar returns to short height")
+    check(is_equal_approx(old_key.SelectionProgress, 1), "Other selected note remains full height")
     var before = snapshot(board)
     var selected = board.SelectedIndex
     check(board.CanUndo, "Value move recorded")
-    current_scene.get_node("%PauseButton").emit_signal("pressed")
-    check(not board.visible and current_scene.get_node("%PausePanel").visible, "Pause hides the puzzle")
-    check(current_scene.get_node("%ModeToggle").disabled, "Pause disables editing")
-    current_scene.get_node("%NumberBar/Digit3").emit_signal("NumberPressed", 3)
-    check(snapshot(board) == before, "Paused puzzle ignores digit entry")
-    await capture("paused")
-    current_scene.get_node("%PausePanel/Resume").emit_signal("pressed")
-    check(board.visible, "Resume reveals the same puzzle")
-    check(snapshot(board) == before, "Pause preserves values and pencil marks")
     var counts = board.GetValueCounts()
     for key in current_scene.get_node("%NumberBar").get_children():
         check(key.Remaining == max(0, 9-counts[key.Number]), "Number strip shows remaining counts")
@@ -100,10 +123,10 @@ func run():
     check(board.Undo(), "Undo history survives scene changes")
     check(board.Redo(), "Redo still works")
     check(snapshot(board) == before, "Undo/redo restores the previous values and notes")
-    current_scene.get_node("%EraseButton").emit_signal("pressed")
+    board.EraseSelected()
     for tile in tiles(board):
         if tile.Index == selected:
-            check(Array(tile.Data.Hints).is_empty(), "Erase clears pencil marks")
+            check(Array(tile.Data.Hints).is_empty(), "Keyboard erase clears pencil marks")
     current_scene.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
     await create_timer(1.1).timeout
     check(current_scene.scene_file_path.ends_with("StartScreen.tscn"), "Android back returns to menu")
