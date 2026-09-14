@@ -8,6 +8,8 @@
 [ext_resource type="Texture2D" path="res://Resources/icons/undo.svg" id="8"]
 [ext_resource type="Texture2D" path="res://Resources/icons/redo.svg" id="9"]
 [ext_resource type="Texture2D" path="res://Resources/icons/edit.svg" id="10"]
+[ext_resource type="Script" path="res://UI/Paper/PaperConfirm.cs" id="11"]
+[ext_resource type="Texture2D" path="res://Resources/icons/restart.svg" id="12"]
 [node name="Main" type="Control"]
 anchors_preset = 15
 anchor_right = 1.0
@@ -18,6 +20,7 @@ NumberButtonScene = ExtResource("6")
 [node name="PaperBackground" parent="." instance=ExtResource("2")]
 [node name="Sheet" type="Control" parent="."]
 unique_name_in_owner = true
+mouse_filter = 2
 anchor_bottom = 1.0
 offset_left = 32.0
 offset_top = 32.0
@@ -33,10 +36,16 @@ custom_minimum_size = Vector2(64,64)
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-horizontal_alignment = 2
+horizontal_alignment = 1
 theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0.957,0.961,0.961,1)
 text = "EASY"
+[node name="RestartButton" parent="Sheet/Navigation" instance=ExtResource("5")]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(64,64)
+Caption = "Start over"
+SvgIcon = ExtResource("12")
 [node name="BoardArea" type="Control" parent="Sheet"]
 layout_mode = 2
 custom_minimum_size = Vector2(476,476)
@@ -53,6 +62,7 @@ size_flags_horizontal = 3
 Symbol = 3
 Caption = "Undo"
 Accent = true
+ShowCaption = true
 SvgIcon = ExtResource("8")
 
 
@@ -63,6 +73,7 @@ size_flags_horizontal = 3
 Symbol = 4
 Caption = "Redo"
 Accent = true
+ShowCaption = true
 SvgIcon = ExtResource("9")
 
 
@@ -73,6 +84,7 @@ size_flags_horizontal = 3
 Symbol = 6
 Caption = "Notes OFF"
 Accent = true
+ShowCaption = true
 toggle_mode = true
 SvgIcon = ExtResource("10")
 
@@ -87,3 +99,11 @@ offset_right = 476.0
 offset_bottom = 0.0
 columns = 9
 theme_override_constants/h_separation = 4
+
+[node name="RestartConfirm" type="Control" parent="."]
+unique_name_in_owner = true
+script = ExtResource("11")
+Title = "Start over?"
+Body = "Your numbers and notes on this puzzle will be cleared. The clues stay."
+ConfirmCaption = "Start over"
+CancelCaption = "Keep playing"

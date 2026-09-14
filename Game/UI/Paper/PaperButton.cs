@@ -7,11 +7,14 @@ namespace SudokuEndless;
 [Tool]
 public partial class PaperButton : Button
 {
-    public enum PaperIcon { None, Settings, Exit }
+    public enum PaperIcon { None, Settings, Exit, Coffee }
     [Export] public string Caption { get; set; } = "Easy";
     [Export] public string Index { get; set; } = "01";
     [Export] public bool Secondary { get; set; }
     [Export] public bool Accent { get; set; }
+
+    /// <summary>Low-emphasis secondary action: no surface until hovered or pressed, muted caption.</summary>
+    [Export] public bool Ghost { get; set; }
     [Export] public int CaptionSize { get; set; } = 24;
     [Export] public PaperIcon Symbol { get; set; }
     private float _highlight;
@@ -93,7 +96,7 @@ public partial class PaperButton : Button
     {
         MouseDefaultCursorShape = CursorShape.PointingHand;
         AccessibilityName = Secondary ? Caption : $"Start {Caption} puzzle";
-        CustomMinimumSize = new Vector2(100, Secondary ? 66 : 68);
+        CustomMinimumSize = new Vector2(100, Ghost ? 52 : Secondary ? 66 : 68);
         foreach (string state in new[] { "normal", "hover", "pressed", "hover_pressed", "focus", "disabled" })
             AddThemeStyleboxOverride(state, new StyleBoxEmpty());
         MouseEntered += () => { _hovered = true; Animate(); };
@@ -134,7 +137,12 @@ public partial class PaperButton : Button
         if (Disabled) foreground = foreground with { A = .35f };
         float inset = _depression * 2;
         var rect = new Rect2(new Vector2(inset, inset + _depression), Size - Vector2.One * inset * 2);
-        _surface.BgColor = Accent ? PaperStyle.Burgundy.Lightened(h * .12f) : PaperStyle.Surface.Lerp(PaperStyle.Burgundy, h);
+        if (Ghost)
+        {
+            foreground = PaperStyle.Muted.Lerp(PaperStyle.Ink, h);
+            _surface.BgColor = PaperStyle.Surface with { A = h };
+        }
+        else _surface.BgColor = Accent ? PaperStyle.Burgundy.Lightened(h * .12f) : PaperStyle.Surface.Lerp(PaperStyle.Burgundy, h);
         DrawStyleBox(_surface, rect);
         float baseline = Size.Y / 2 + (Secondary ? 9 : 12) + _depression;
         if (Secondary)
@@ -143,7 +151,7 @@ public partial class PaperButton : Button
             float extra = Symbol == PaperIcon.None ? 0 : 34;
             float left = (Size.X - width - extra) / 2;
             DrawString(PaperStyle.Body, new Vector2(left + extra, baseline), Caption, fontSize: CaptionSize, modulate: foreground);
-            if (Symbol != PaperIcon.None) DrawIcon(new Vector2(left + 11, Size.Y / 2 + _depression), foreground);
+            if (Symbol != PaperIcon.None) DrawIcon(new Vector2(left + 11, Size.Y / 2 + _depression), Ghost ? PaperStyle.Burgundy : foreground);
         }
         else
         {
@@ -170,6 +178,13 @@ public partial class PaperButton : Button
                 Vector2 direction = Vector2.FromAngle(i * Mathf.Tau / 8);
                 DrawLine(center + direction * 8, center + direction * 12, color, 3, true);
             }
+        }
+        else if (Symbol == PaperIcon.Coffee)
+        {
+            DrawPolyline(new[] { center + new Vector2(-11,-3), center + new Vector2(-9,10), center + new Vector2(4,10), center + new Vector2(6,-3), center + new Vector2(-11,-3) }, color, 1.5f, true);
+            DrawArc(center + new Vector2(6,3), 4, -Mathf.Pi / 2, Mathf.Pi / 2, 12, color, 1.5f, true);
+            for (int i = 0; i < 3; i++)
+                DrawLine(center + new Vector2(-6 + i * 4, -7), center + new Vector2(-6 + i * 4, -12), color, 1.5f, true);
         }
         else
         {

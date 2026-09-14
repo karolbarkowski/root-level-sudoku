@@ -118,6 +118,60 @@ public partial class BoardView : Control
 		ApplyHighlights();
 	}
 
+	/// <summary>Clears the player's numbers and notes, keeps the clues, and starts the history afresh.</summary>
+	public void Restart()
+	{
+		if (_game == null)
+		{
+			return;
+		}
+
+		Span<bool> isGiven = stackalloc bool[BoardGeometry.CellCount];
+		for (int i = 0; i < BoardGeometry.CellCount; i++)
+		{
+			isGiven[i] = _cells[i].IsGiven;
+			if (!isGiven[i])
+			{
+				_cells[i].Clear();
+			}
+		}
+
+		_game.Restart(isGiven);
+		_selectedIndex = -1;
+		GameSession.SelectedIndex = -1;
+		RenderAll();
+		ApplyHighlights();
+		EmitSignal(SignalName.SelectionChanged, 0);
+		EmitSignal(SignalName.BoardChanged);
+	}
+
+	/// <summary>True when there is anything <see cref="Restart"/> would clear: a number, a note or history.</summary>
+	public bool HasProgress
+	{
+		get
+		{
+			if (_game == null)
+			{
+				return false;
+			}
+
+			if (_game.CanUndo || _game.CanRedo)
+			{
+				return true;
+			}
+
+			foreach (CellData cell in _cells)
+			{
+				if (cell != null && !cell.IsGiven && (cell.Value != 0 || cell.HasHints))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+	}
+
 	/// <summary>Counts of each digit (1-9) currently on the board, indexed by value.</summary>
 	public int[] GetValueCounts()
 	{

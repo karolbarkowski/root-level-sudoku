@@ -60,6 +60,8 @@ public partial class CellData : Resource
 
 	public bool HasHint(int n) => _hints.Contains(n);
 
+	public bool HasHints => _hints.Count > 0;
+
 	/// <summary>Adds the hint if absent, removes it if present. Ignores out-of-range values.</summary>
 	public void ToggleHint(int n)
 	{

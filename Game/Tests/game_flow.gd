@@ -143,6 +143,31 @@ func run():
     for tile in tiles(board):
         if tile.Index == selected:
             check(Array(tile.Data.Hints).is_empty(), "Keyboard erase clears pencil marks")
+    for tile in tiles(board):
+        if not tile.Data.IsGiven:
+            board.SelectCell(tile.Index)
+            break
+    var actions = current_scene.get_node("%Sheet/Actions").get_global_rect()
+    for pressed in [true, false]:
+        var tap = InputEventMouseButton.new()
+        tap.position = Vector2(actions.get_center().x, actions.position.y - 8)
+        tap.button_index = MOUSE_BUTTON_LEFT
+        tap.pressed = pressed
+        root.push_input(tap, true)
+        await process_frame
+    check(board.SelectedIndex == -1, "Tapping empty space clears the selection")
+    check(board.HasProgress, "Played puzzle has progress to clear")
+    check(not current_scene.get_node("%RestartButton").disabled, "Start over is available once there is progress")
+    current_scene.get_node("%RestartButton").emit_signal("pressed")
+    await create_timer(.3).timeout
+    check(current_scene.get_node("%RestartConfirm").IsOpen, "Start over asks for confirmation")
+    current_scene.get_node("%RestartConfirm").Close(true)
+    await create_timer(.3).timeout
+    check(not board.HasProgress and not board.CanUndo and not board.CanRedo, "Start over clears numbers, notes and history")
+    for tile in tiles(board):
+        if not tile.Data.IsGiven:
+            check(tile.Data.Value == 0 and Array(tile.Data.Hints).is_empty(), "Start over empties every non-clue cell")
+    check(current_scene.get_node("%RestartButton").disabled, "Start over is unavailable with nothing to clear")
     current_scene.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
     await settle()
     check(current_scene.scene_file_path.ends_with("StartScreen.tscn"), "Android back returns to menu")

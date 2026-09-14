@@ -18,6 +18,8 @@ public partial class Main : Control, ITransitionScreen
     private PaperIconButton _notes;
     private PaperIconButton _undo;
     private PaperIconButton _redo;
+    private PaperIconButton _restart;
+    private PaperConfirm _restartConfirm;
     private int _activeDigit;
     private int _lastSelectedIndex = -1;
     private int _lastSelectedValue;
@@ -56,6 +58,10 @@ public partial class Main : Control, ITransitionScreen
         _notes = GetNode<PaperIconButton>("%ModeToggle");
         _undo = GetNode<PaperIconButton>("%UndoButton");
         _redo = GetNode<PaperIconButton>("%RedoButton");
+        _restart = GetNode<PaperIconButton>("%RestartButton");
+        _restartConfirm = GetNode<PaperConfirm>("%RestartConfirm");
+        _restart.Pressed += () => { if (!_leaving) _restartConfirm.Open(); };
+        _restartConfirm.Confirmed += () => _board.Restart();
         GetNode<Label>("%Difficulty").Text = GameSession.Difficulty.ToString().ToUpperInvariant();
         GetNode<PaperIconButton>("%BackButton").Pressed += BackToMenu;
         _undo.Pressed += () => _board.Undo();
@@ -91,6 +97,11 @@ public partial class Main : Control, ITransitionScreen
         background.SetAnchorsPreset(LayoutPreset.TopLeft);
         background.Position = Vector2.Zero;
         background.Size = Size;
+        if (_restartConfirm != null)
+        {
+            _restartConfirm.Position = Vector2.Zero;
+            _restartConfirm.Size = Size;
+        }
         // Pin the header and controls to the edges; center the square in the space between.
         float scale = Mathf.Min(Size.X / 540, Size.Y / 980);
         float height = Size.Y / scale - 32;
@@ -106,8 +117,8 @@ public partial class Main : Control, ITransitionScreen
             control.Size = new Vector2(476, h);
         }
         Place(0, 0, 64);
-        Place(1, (64 + height - 328 - 476) / 2, 476);
-        Place(2, height - 328, 88);
+        Place(1, (64 + height - 352 - 476) / 2, 476);
+        Place(2, height - 352, 112);
         Place(3, height - 220, 220);
     }
 
@@ -156,23 +167,11 @@ public partial class Main : Control, ITransitionScreen
         Refresh();
     }
 
-    public override void _UnhandledInput(InputEvent @event)
+    // Presses land here only when nothing on top took them: the sheet ignores the mouse, while the
+    // board, keys and buttons stop their own. So this is a tap on empty space.
+    public override void _GuiInput(InputEvent @event)
     {
-        Vector2 point;
-        bool pressed;
-        if (@event is InputEventMouseButton mouse && mouse.ButtonIndex == MouseButton.Left)
-        {
-            point = mouse.Position;
-            pressed = mouse.Pressed;
-        }
-        else if (@event is InputEventScreenTouch touch)
-        {
-            point = touch.Position;
-            pressed = touch.Pressed;
-        }
-        else return;
-
-        if (pressed && !_board.GetGlobalRect().HasPoint(point))
+        if (@event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
             _board.ClearSelection();
     }
 
@@ -188,8 +187,10 @@ public partial class Main : Control, ITransitionScreen
         int[] counts = _board.GetValueCounts();
         _undo.Disabled = !_board.CanUndo;
         _redo.Disabled = !_board.CanRedo;
+        _restart.Disabled = !_board.HasProgress;
         _undo.RefreshFeedback();
         _redo.RefreshFeedback();
+        _restart.RefreshFeedback();
         // Keep keys available: nine occurrences do not guarantee nine correct placements.
         foreach (var key in _keys)
         {
@@ -206,6 +207,11 @@ public partial class Main : Control, ITransitionScreen
     public void BackToMenu()
     {
         if (_leaving || Engine.IsEditorHint()) return;
+        if (_restartConfirm.IsOpen)
+        {
+            _restartConfirm.Close(false);
+            return;
+        }
         _leaving = SceneTransition.GoTo(SceneTransition.StartScreenPath);
     }
 
@@ -224,6 +230,7 @@ public partial class Main : Control, ITransitionScreen
     public override void _UnhandledKeyInput(InputEvent @event)
     {
         if (@event is not InputEventKey key || !key.Pressed || key.Echo) return;
+        if (_restartConfirm.IsOpen && key.Keycode != Key.Escape) return;
         if (key.Keycode == Key.Escape) BackToMenu();
         else if (key.Keycode >= Key.Key1 && key.Keycode <= Key.Key9) EnterNumber((int)key.Keycode - (int)Key.Key0);
         else if (key.Keycode == Key.Backspace || key.Keycode == Key.Delete) _board.EraseSelected();

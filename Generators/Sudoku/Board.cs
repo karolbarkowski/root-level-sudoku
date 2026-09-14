@@ -103,6 +103,19 @@ public class Board
         return true;
     }
 
+    /// <summary>Clears every cell that is not a clue and forgets the undo/redo history.</summary>
+    /// <param name="isGiven">Which cells are clues, indexed <c>row * 9 + col</c>.</param>
+    public void Restart(ReadOnlySpan<bool> isGiven)
+    {
+        if (isGiven.Length != state.Length)
+            throw new ArgumentException("Clue mask must cover all 81 cells", nameof(isGiven));
+
+        for (int i = 0; i < state.Length; i++)
+            if (!isGiven[i]) state[i] = 0;
+        _undo?.Clear();
+        _redo?.Clear();
+    }
+
     /// <summary>
     /// True only when the board is a complete, valid solution: every cell filled and every row,
     /// column, and 3x3 box contains the digits 1-9 exactly once.

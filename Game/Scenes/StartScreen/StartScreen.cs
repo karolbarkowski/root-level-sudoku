@@ -33,9 +33,11 @@ public partial class StartScreen : Control, ITransitionScreen
 	private const float SidePadding = 32;
 	private const float EdgePadding = 40;
 	private const float HeroHeight = 320;
-	private const float HeroGap = 10;
-	private const float MenuHeight = 570;
-	private const float PosterHeight = (EdgePadding * 2) + HeroHeight + HeroGap + MenuHeight;
+	private const float HeroGap = 24;
+	private const float ResumeHeight = 80;
+	private const float ResumeGap = 28;
+
+	private const string SupportUrl = "https://buymeacoffee.com/rootlevelit";
 
 	private Control _background;
 	private Control _hero;
@@ -73,6 +75,7 @@ public partial class StartScreen : Control, ITransitionScreen
 		settings.Pressed += () => Navigate(settings, SceneTransition.SettingsPath);
 		var quit = _menu.GetNode<PaperButton>("Footer/Quit");
 		quit.Pressed += () => Navigate(quit, null);
+		_menu.GetNode<PaperButton>("Support").Pressed += () => OS.ShellOpen(SupportUrl);
 		Resized += Layout;
 		Layout();
 		if (!SceneTransition.IsTransitioning) PlayEntryWithoutTransition();
@@ -82,11 +85,15 @@ public partial class StartScreen : Control, ITransitionScreen
 	private void Layout()
 	{
 		// Scale one complete vertical poster. Never shrink the title independently
-		// of the controls.
-		float resumeHeight = _resume.Visible ? 108 : 0;
-		float height = PosterHeight + resumeHeight;
+		// of the controls. The title sits at the top; the actions (continue and the menu) form one
+		// section held to the bottom edge, and any spare height opens up between the two.
+		float resumeHeight = _resume.Visible ? ResumeHeight + ResumeGap : 0;
+		float menuHeight = _menu.GetCombinedMinimumSize().Y;
+		float sectionHeight = resumeHeight + menuHeight;
+		float height = (EdgePadding * 2) + HeroHeight + HeroGap + sectionHeight;
 		float scale = Mathf.Min(Size.X / PosterWidth, Size.Y / height);
-		Vector2 origin = new Vector2((Size.X - PosterWidth * scale) / 2, Mathf.Min(24, (Size.Y - height * scale) / 2));
+		Vector2 origin = new Vector2((Size.X - PosterWidth * scale) / 2, 0);
+		Vector2 section = new Vector2(origin.X, Size.Y - (EdgePadding + sectionHeight) * scale);
 		const float column = PosterWidth - (SidePadding * 2);
 		// Sized here rather than by its own full-rect anchors: on Android those never resolve
 		// against this root and the sheet collapses to 0x0, leaving the bare clear colour.
@@ -95,11 +102,11 @@ public partial class StartScreen : Control, ITransitionScreen
 		_hero.Position = origin + new Vector2(SidePadding, EdgePadding) * scale;
 		_hero.Size = new Vector2(column, HeroHeight);
 		_hero.Scale = Vector2.One * scale;
-		_resume.Position = origin + new Vector2(SidePadding, EdgePadding + HeroHeight + 20) * scale;
-		_resume.Size = new Vector2(column, 80);
+		_resume.Position = section + new Vector2(SidePadding, 0) * scale;
+		_resume.Size = new Vector2(column, ResumeHeight);
 		_resume.Scale = Vector2.One * scale;
-		_menu.Position = origin + new Vector2(SidePadding, EdgePadding + HeroHeight + HeroGap + resumeHeight) * scale;
-		_menu.Size = new Vector2(column, MenuHeight);
+		_menu.Position = section + new Vector2(SidePadding, resumeHeight) * scale;
+		_menu.Size = new Vector2(column, menuHeight);
 		_menu.Scale = Vector2.One * scale;
 	}
 	/// <summary>One slot per menu row. The spacer has nothing to show, so it does not take a slot.</summary>

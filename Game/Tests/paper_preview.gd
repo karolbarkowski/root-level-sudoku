@@ -6,6 +6,12 @@ func check(ok: bool, message: String):
     if not ok:
         push_error(message)
         failures += 1
+# Waits out a scene transition, including the cover lifting and the entrance playing.
+func settle():
+    var transition = root.get_node("SceneTransition")
+    while transition.Busy:
+        await process_frame
+    await create_timer(.7).timeout
 func _initialize():
     run.call_deferred()
 func run():
@@ -48,10 +54,11 @@ func run():
     up.action = "ui_accept"
     up.pressed = false
     Input.parse_input_event(up)
-    await create_timer(.3).timeout
+    await create_timer(.05).timeout
+    await settle()
     check(current_scene.scene_file_path.ends_with("Settings.tscn"), "Keyboard activation must navigate to Settings")
     current_scene.get_node("%BackButton").emit_signal("pressed")
-    await create_timer(1.1).timeout
+    await settle()
     check(current_scene.scene_file_path.ends_with("StartScreen.tscn"), "Settings Back must restore start screen")
     var easy = current_scene.get_node("Menu/Difficulties/Easy")
     var point = easy.get_global_rect().get_center()

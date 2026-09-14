@@ -11,6 +11,12 @@ public partial class PaperIconButton : Button
 	[Export] public Texture2D SvgIcon { get; set; }
 	[Export] public string Caption { get; set; } = "";
 	[Export] public bool Accent { get; set; }
+
+	/// <summary>Writes <see cref="Caption"/> under the icon; the circle shrinks to leave room.</summary>
+	[Export] public bool ShowCaption { get; set; }
+
+	private const float CaptionHeight = 24;
+	private const int CaptionSize = 15;
 	private float _feedback;
 	private bool _hover;
 	private bool _touch;
@@ -47,9 +53,10 @@ public partial class PaperIconButton : Button
 	public override void _Draw()
 	{
 		bool active = Accent || ButtonPressed;
-		var center = new Vector2(Size.X / 2, Size.Y / 2 + _feedback * 2);
-		float radius = Mathf.Min(Size.X, Size.Y) / 2 - 5;
-		float glyphScale = Caption.Length > 0 ? 1.45f : 1.15f;
+		float iconHeight = ShowCaption ? Size.Y - CaptionHeight : Size.Y;
+		var center = new Vector2(Size.X / 2, iconHeight / 2 + _feedback * 2);
+		float radius = Mathf.Min(Size.X, iconHeight) / 2 - 5;
+		float glyphScale = ShowCaption ? 1.45f : 1.15f;
 		Color fill = active ? PaperStyle.Burgundy : PaperStyle.Surface;
 		fill = fill.Lerp(PaperStyle.Ink, _feedback * .22f);
 		Color ink = PaperStyle.Ink;
@@ -80,5 +87,11 @@ public partial class PaperIconButton : Button
 			Line(new(3,-8),new(9,-2));
 		}
 		DrawSetTransform(Vector2.Zero);
+		if (ShowCaption && Caption.Length > 0)
+		{
+			Color caption = PaperStyle.Muted.Lerp(PaperStyle.Ink, _feedback);
+			if (Disabled) caption.A = .35f;
+			DrawString(PaperStyle.Body, new Vector2(0, Size.Y - 5), Caption, HorizontalAlignment.Center, Size.X, CaptionSize, caption);
+		}
 	}
 }
