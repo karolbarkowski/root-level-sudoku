@@ -1,7 +1,7 @@
 # Dark vector UI
 
-The existing Paper scene and class names are retained for compatibility. Active screens
-use flat vector surfaces; the old paper and numeral textures are no longer rendered.
+The Paper scene and class names are kept from an earlier look. Screens use flat vector
+surfaces and SVG icons.
 
 ## Palette
 - Background: #272F33
@@ -20,7 +20,6 @@ Resources/default_tile_textures.tres.
 - PaperMenu.tscn / PaperFooter.tscn: difficulty and navigation composition.
 - PaperButton.tscn: reusable rounded text button, including the continue action.
 - PaperIconButton.tscn: reusable animated back, undo, redo and notes icons.
-- GenerationOverlay.tscn: the scene-transition cover, with an optional message and animated spinner.
 - NumberButton.tscn: bottom-aligned digit bar with remaining count; selection animates
   height and orange fill over 220 ms. Disabled animation settings apply immediately.
 
@@ -31,7 +30,7 @@ it does not persist across application restarts.
 
 Every scene change goes through the SceneTransition autoload (UI/Transition). The
 outgoing scene plays its exit while a cover fades in; the next scene loads on a worker
-thread while a fresh puzzle is generated on a worker task, with the GenerationOverlay's
+thread while a fresh puzzle is generated on a worker task, with the TransitionOverlay's (UI/Transition)
 message and spinner on the cover. The new scene is swapped in under the cover, the board
 builds its tiles over several frames, and the cover lifts as the game controls enter in a
 short stagger. The previous scene is freed piecemeal afterwards. Scenes take part through

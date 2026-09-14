@@ -5,14 +5,11 @@ using Generators.Sudoku;
 using Sudoku;
 namespace SudokuEndless;
 
-public enum InputMode { Value, Hints }
-
 /// <summary>Coordinates the reusable board, paper actions and digit keys on a portrait sheet.</summary>
 [Tool]
 public partial class Main : Control, ITransitionScreen
 {
     [Export] public PackedScene NumberButtonScene { get; set; }
-    [Export] public ButtonGroup NumberSelection { get; set; }
     private BoardView _board;
     private Control _sheet;
     private PaperIconButton _notes;
@@ -22,9 +19,6 @@ public partial class Main : Control, ITransitionScreen
     private PaperConfirm _restartConfirm;
     private SolvedPanel _solvedPanel;
     private bool _solved;
-    private int _activeDigit;
-    private int _lastSelectedIndex = -1;
-    private int _lastSelectedValue;
     private Tween _entry;
     private bool _leaving;
     private bool _previousBack;
@@ -163,7 +157,6 @@ public partial class Main : Control, ITransitionScreen
     {
         if (_solved) return;
         if (!_board.CanEdit) return;
-        _activeDigit = number;
         if (_notes.ButtonPressed)
             _board.ToggleSelectedHint(number);
         else if (_board.SelectedUserValue == number)
@@ -173,11 +166,7 @@ public partial class Main : Control, ITransitionScreen
         Refresh();
     }
 
-    private void OnSelectionChanged(int value)
-    {
-        _activeDigit = value;
-        Refresh();
-    }
+    private void OnSelectionChanged(int value) => Refresh();
 
     // Presses land here only when nothing on top took them: the sheet ignores the mouse, while the
     // board, keys and buttons stop their own. So this is a tap on empty space.
@@ -189,13 +178,6 @@ public partial class Main : Control, ITransitionScreen
 
     private void Refresh()
     {
-        // A cell tap changes the selected index/value; a number tap keeps its active key while
-        // editing an empty cell.
-        int selectedValue = _board.SelectedUserValue;
-        if (_board.SelectedIndex != _lastSelectedIndex || selectedValue != _lastSelectedValue)
-            _activeDigit = selectedValue;
-        _lastSelectedIndex = _board.SelectedIndex;
-        _lastSelectedValue = selectedValue;
         int[] counts = _board.GetValueCounts();
         _undo.Disabled = !_board.CanUndo;
         _redo.Disabled = !_board.CanRedo;

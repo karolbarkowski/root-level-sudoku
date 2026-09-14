@@ -42,7 +42,7 @@ public partial class SceneTransition : CanvasLayer
 
     private static SceneTransition _instance;
 
-    private GenerationOverlay _overlay;
+    private TransitionOverlay _overlay;
     private bool _busy;
     private int _run;
     private double _worstFrame;
@@ -63,7 +63,7 @@ public partial class SceneTransition : CanvasLayer
     {
         _instance = this;
         Layer = 100;
-        _overlay = GetNode<GenerationOverlay>("Overlay");
+        _overlay = GetNode<TransitionOverlay>("Overlay");
         _overlay.Prewarm();
         await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
         await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);

@@ -1,117 +1,257 @@
 [gd_scene format=3 uid="uid://c3main0000001"]
-[ext_resource type="Script" path="res://Scenes/Game/Main.cs" id="1"]
+
+[ext_resource type="Script" uid="uid://c10of8qy714oo" path="res://Scenes/Game/Main.cs" id="1"]
 [ext_resource type="PackedScene" path="res://UI/Paper/PaperBackground.tscn" id="2"]
 [ext_resource type="Theme" path="res://UI/Paper/PaperTheme.tres" id="3"]
-[ext_resource type="PackedScene" path="res://Scenes/Game/Board/Board.tscn" id="4"]
+[ext_resource type="PackedScene" uid="uid://c2board000001" path="res://Scenes/Game/Board/Board.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://UI/Paper/PaperIconButton.tscn" id="5"]
-[ext_resource type="PackedScene" path="res://Scenes/Game/NumberButton/NumberButton.tscn" id="6"]
-[ext_resource type="Texture2D" path="res://Resources/icons/undo.svg" id="8"]
-[ext_resource type="Texture2D" path="res://Resources/icons/redo.svg" id="9"]
-[ext_resource type="Texture2D" path="res://Resources/icons/edit.svg" id="10"]
-[ext_resource type="Script" path="res://UI/Paper/PaperConfirm.cs" id="11"]
-[ext_resource type="Texture2D" path="res://Resources/icons/restart.svg" id="12"]
-[ext_resource type="Texture2D" path="res://Resources/icons/arrow-left.svg" id="13"]
-[ext_resource type="Script" path="res://Scenes/Game/SolvedPanel.cs" id="14"]
-[node name="Main" type="Control"]
+[ext_resource type="PackedScene" uid="uid://cnbtn00000001" path="res://Scenes/Game/NumberButton/NumberButton.tscn" id="6"]
+[ext_resource type="Shader" uid="uid://boux7idvoe78t" path="res://UI/Paper/IconTint.gdshader" id="6_6go6g"]
+[ext_resource type="Texture2D" uid="uid://dack4ygb3pp1p" path="res://Resources/icons/undo.svg" id="8"]
+[ext_resource type="Texture2D" uid="uid://d0av3a4pkj0sh" path="res://Resources/icons/redo.svg" id="9"]
+[ext_resource type="Texture2D" uid="uid://dveaaam76x6l4" path="res://Resources/icons/edit.svg" id="10"]
+[ext_resource type="Script" uid="uid://dqi3k42euv2qj" path="res://UI/Paper/PaperConfirm.cs" id="11"]
+[ext_resource type="Texture2D" uid="uid://c1hamsgg7p2xt" path="res://Resources/icons/restart.svg" id="12"]
+[ext_resource type="Texture2D" uid="uid://d2d8n7tvfwyaj" path="res://Resources/icons/arrow-left.svg" id="13"]
+[ext_resource type="Script" uid="uid://bxamcosblbqhi" path="res://Scenes/Game/SolvedPanel.cs" id="14"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_eu08i"]
+shader = ExtResource("6_6go6g")
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_himfo"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_1h1nk"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_1c6t4"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_b2xxk"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_swnig"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_q5n3e"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_smjng"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_hu0go"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_poxgx"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_cubcr"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_82o10"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_77qeb"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_taa05"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_2ihb3"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_qq4p7"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_uj8ll"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_o1hxi"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_5kstq"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ysmjb"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_otxt1"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_y5cqi"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_anod5"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_c15kq"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_yy5hd"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_tw7i1"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_5bmai"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_dd6lt"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_achxs"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_0n82s"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_umwbl"]
+
+[node name="Main" type="Control" unique_id=1493660313]
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme = ExtResource("3")
 script = ExtResource("1")
 NumberButtonScene = ExtResource("6")
-[node name="PaperBackground" parent="." instance=ExtResource("2")]
-[node name="Sheet" type="Control" parent="."]
+
+[node name="PaperBackground" parent="." unique_id=678207809 instance=ExtResource("2")]
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_right = 540.0
+offset_bottom = 1220.0
+
+[node name="Sheet" type="Control" parent="." unique_id=167103212]
 unique_name_in_owner = true
-mouse_filter = 2
-anchor_bottom = 1.0
+anchors_preset = 0
 offset_left = 32.0
 offset_top = 32.0
 offset_right = 508.0
-offset_bottom = 0.0
-[node name="Navigation" type="HBoxContainer" parent="Sheet"]
-layout_mode = 2
-[node name="BackButton" parent="Sheet/Navigation" instance=ExtResource("5")]
+offset_bottom = 1220.0
+mouse_filter = 2
+
+[node name="Navigation" type="HBoxContainer" parent="Sheet" unique_id=2128464149]
+layout_mode = 0
+offset_right = 476.0
+offset_bottom = 64.0
+
+[node name="BackButton" parent="Sheet/Navigation" unique_id=12200650 instance=ExtResource("5")]
 unique_name_in_owner = true
+material = SubResource("ShaderMaterial_eu08i")
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
-custom_minimum_size = Vector2(64,64)
-Caption = "Back"
+tooltip_text = "Back"
+mouse_default_cursor_shape = 2
+accessibility_name = "Back"
+theme_override_styles/normal = SubResource("StyleBoxEmpty_himfo")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_1h1nk")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_1c6t4")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_b2xxk")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_swnig")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_q5n3e")
 SvgIcon = ExtResource("13")
 TintIcon = true
-[node name="Difficulty" type="Label" parent="Sheet/Navigation"]
+Caption = "Back"
+
+[node name="Difficulty" type="Label" parent="Sheet/Navigation" unique_id=438118813]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.957, 0.961, 0.961, 1)
 theme_override_font_sizes/font_size = 20
-theme_override_colors/font_color = Color(0.957,0.961,0.961,1)
 text = "EASY"
-[node name="RestartButton" parent="Sheet/Navigation" instance=ExtResource("5")]
+horizontal_alignment = 1
+
+[node name="RestartButton" parent="Sheet/Navigation" unique_id=1584916215 instance=ExtResource("5")]
 unique_name_in_owner = true
+material = SubResource("ShaderMaterial_eu08i")
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
-custom_minimum_size = Vector2(64,64)
-Caption = "Start over"
+tooltip_text = "Start over"
+mouse_default_cursor_shape = 2
+accessibility_name = "Start over"
+theme_override_styles/normal = SubResource("StyleBoxEmpty_smjng")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_hu0go")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_poxgx")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_cubcr")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_82o10")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_77qeb")
+disabled = true
 SvgIcon = ExtResource("12")
 TintIcon = true
-[node name="BoardArea" type="Control" parent="Sheet"]
-layout_mode = 2
-custom_minimum_size = Vector2(476,476)
-[node name="Board" parent="Sheet/BoardArea" instance=ExtResource("4")]
+Caption = "Start over"
+
+[node name="BoardArea" type="Control" parent="Sheet" unique_id=1832515540]
+custom_minimum_size = Vector2(476, 476)
+anchors_preset = 0
+offset_top = 212.0
+offset_right = 476.0
+offset_bottom = 688.0
+
+[node name="Board" parent="Sheet/BoardArea" unique_id=203625505 instance=ExtResource("4")]
 unique_name_in_owner = true
-[node name="Actions" type="HBoxContainer" parent="Sheet"]
-layout_mode = 2
+layout_mode = 1
+
+[node name="Actions" type="HBoxContainer" parent="Sheet" unique_id=1018014855]
+layout_mode = 0
+offset_top = 836.0
+offset_right = 476.0
+offset_bottom = 948.0
 theme_override_constants/separation = 8
 
-[node name="UndoButton" parent="Sheet/Actions" instance=ExtResource("5")]
+[node name="UndoButton" parent="Sheet/Actions" unique_id=557155816 instance=ExtResource("5")]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-Symbol = 3
+tooltip_text = "Undo"
+mouse_default_cursor_shape = 2
+accessibility_name = "Undo"
+theme_override_styles/normal = SubResource("StyleBoxEmpty_taa05")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_2ihb3")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_qq4p7")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_uj8ll")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_o1hxi")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_5kstq")
+disabled = true
+SvgIcon = ExtResource("8")
 Caption = "Undo"
 Accent = true
 ShowCaption = true
-SvgIcon = ExtResource("8")
 
-
-[node name="RedoButton" parent="Sheet/Actions" instance=ExtResource("5")]
+[node name="RedoButton" parent="Sheet/Actions" unique_id=2125094362 instance=ExtResource("5")]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-Symbol = 4
+tooltip_text = "Redo"
+mouse_default_cursor_shape = 2
+accessibility_name = "Redo"
+theme_override_styles/normal = SubResource("StyleBoxEmpty_ysmjb")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_otxt1")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_y5cqi")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_anod5")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_c15kq")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_yy5hd")
+disabled = true
+SvgIcon = ExtResource("9")
 Caption = "Redo"
 Accent = true
 ShowCaption = true
-SvgIcon = ExtResource("9")
 
-
-[node name="ModeToggle" parent="Sheet/Actions" instance=ExtResource("5")]
+[node name="ModeToggle" parent="Sheet/Actions" unique_id=598984094 instance=ExtResource("5")]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-Symbol = 6
-Caption = "Notes OFF"
-Accent = true
-ShowCaption = true
+tooltip_text = "Notes OFF"
+mouse_default_cursor_shape = 2
+accessibility_name = "Notes OFF"
+theme_override_styles/normal = SubResource("StyleBoxEmpty_tw7i1")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_5bmai")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_dd6lt")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_achxs")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_0n82s")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_umwbl")
 toggle_mode = true
 SvgIcon = ExtResource("10")
+Caption = "Notes OFF"
+ShowCaption = true
 
-[node name="NumberBar" type="GridContainer" parent="Sheet"]
+[node name="NumberBar" type="GridContainer" parent="Sheet" unique_id=160603239]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0,220)
+custom_minimum_size = Vector2(0, 220)
 layout_mode = 1
+anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_top = -220.0
 offset_right = 476.0
-offset_bottom = 0.0
-columns = 9
 theme_override_constants/h_separation = 0
+columns = 9
 
-[node name="SolvedPanel" type="Control" parent="."]
+[node name="SolvedPanel" type="Control" parent="." unique_id=668739611]
 unique_name_in_owner = true
+anchors_preset = 0
+offset_right = 540.0
+offset_bottom = 1220.0
 script = ExtResource("14")
 
-[node name="RestartConfirm" type="Control" parent="."]
+[node name="RestartConfirm" type="Control" parent="." unique_id=2040909329]
 unique_name_in_owner = true
+anchors_preset = 0
+offset_right = 540.0
+offset_bottom = 1220.0
 script = ExtResource("11")
 Title = "Start over?"
 Body = "Your numbers and notes on this puzzle will be cleared. The clues stay."

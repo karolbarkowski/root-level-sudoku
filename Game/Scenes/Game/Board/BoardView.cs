@@ -103,21 +103,6 @@ public partial class BoardView : Control
 
 	// --- Central manager surface (delegates to the domain board) ---
 
-	/// <summary>Generates a fresh puzzle at the given difficulty and renders it.</summary>
-	public void NewGame(SudokuGenerator.Difficulty difficulty) =>
-		InstallGeneratedGame(SudokuGenerator.Generate(difficulty), difficulty);
-
-	/// <summary>Installs a board generated off the main thread. Must be called on the Godot thread.</summary>
-	public void InstallGeneratedGame(Board generated, SudokuGenerator.Difficulty difficulty)
-	{
-		GameSession.Start(generated, difficulty);
-		_game = generated;
-		_selectedIndex = -1;
-		Array.Copy(GameSession.Cells, _cells, _cells.Length);
-		RenderAll();
-		ApplyHighlights();
-	}
-
 	/// <summary>Clears the player's numbers and notes, keeps the clues, and starts the history afresh.</summary>
 	public void Restart()
 	{
@@ -269,30 +254,6 @@ public partial class BoardView : Control
 		SyncAllValues();
 		RenderAll();
 		EmitSignal(SignalName.SelectionChanged, SelectedUserValue);
-		EmitSignal(SignalName.BoardChanged);
-		CheckForCompletion();
-		return true;
-	}
-
-	/// <summary>
-	/// Asks the domain board for the next logical move, places it, and selects that cell. Returns
-	/// false when no move can be suggested.
-	/// </summary>
-	public bool ApplyHint()
-	{
-		if (_game?.SuggestNextMove() is not Move move)
-		{
-			return false;
-		}
-
-		_game.PlaceMove(move.Row, move.Col, move.Value);
-		int index = BoardGeometry.Index(move.Row, move.Col);
-		_cells[index].Value = move.Value; // hints kept (hidden under the value), as in SetSelectedValue
-		_selectedIndex = index;
-
-		RenderAll();
-		ApplyHighlights();
-		GameSession.SelectedIndex = index;
 		EmitSignal(SignalName.BoardChanged);
 		CheckForCompletion();
 		return true;
@@ -574,9 +535,6 @@ public partial class BoardView : Control
 	public bool SelectedHasHint(int number) =>
 		_selectedIndex >= 0 && !_cells[_selectedIndex].IsGiven && _cells[_selectedIndex].IsEmpty &&
 		_cells[_selectedIndex].HasHint(number);
-	public bool SelectedHasNotes =>
-		_selectedIndex >= 0 && !_cells[_selectedIndex].IsGiven && _cells[_selectedIndex].IsEmpty &&
-		_cells[_selectedIndex].Hints.Length > 0;
 
 	/// <summary>Clears both the board highlight and the number-strip selection.</summary>
 	public void ClearSelection()

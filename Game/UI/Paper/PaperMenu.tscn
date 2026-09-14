@@ -45,4 +45,4 @@ Caption = "Buy me a coffee"
 Secondary = true
 Ghost = true
 CaptionSize = 20
-Icon = ExtResource("3")
+LeadingIcon = ExtResource("3")

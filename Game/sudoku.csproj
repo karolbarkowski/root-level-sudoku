@@ -7,7 +7,4 @@
   <ItemGroup>
     <ProjectReference Include="..\Generators\Generators.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Generators\Generators.csproj" />
-  </ItemGroup>
 </Project>

@@ -21,9 +21,8 @@ public enum TileHighlight
 /// never mutates game state — that keeps the data flow one-directional (state down, events up).
 ///
 /// The script is a <c>[Tool]</c> so it renders live in the editor. Exported properties are the
-/// tile's public surface: <see cref="Data"/> (its state object), <see cref="IsHighlighted"/>,
-/// and <see cref="Textures"/>. <see cref="CurrentValue"/> and <see cref="Hints"/> are code-level
-/// convenience accessors over <see cref="Data"/>.
+/// tile's public surface: <see cref="Data"/> (its state object), <see cref="Highlight"/>, and
+/// <see cref="Textures"/>.
 /// </summary>
 [Tool]
 public partial class Tile : Control
@@ -88,30 +87,6 @@ public partial class Tile : Control
 		}
 	}
 
-	/// <summary>Convenience accessor for the displayed value (0 = empty), backed by <see cref="Data"/>.</summary>
-	public int CurrentValue
-	{
-		get => _data?.Value ?? 0;
-		set
-		{
-			EnsureData();
-			_data.Value = value;
-			RefreshVisuals();
-		}
-	}
-
-	/// <summary>Convenience accessor for the pencil-mark hints, backed by <see cref="Data"/>.</summary>
-	public int[] Hints
-	{
-		get => _data?.Hints ?? System.Array.Empty<int>();
-		set
-		{
-			EnsureData();
-			_data.Hints = value;
-			RefreshVisuals();
-		}
-	}
-
 	public override void _Ready()
 	{
 		CacheNodes();
@@ -150,8 +125,6 @@ public partial class Tile : Control
 
 		_nodesReady = _valueLabel != null && _hintsGrid != null;
 	}
-
-	private void EnsureData() => _data ??= new CellData();
 
 	private void RefreshVisuals()
 	{

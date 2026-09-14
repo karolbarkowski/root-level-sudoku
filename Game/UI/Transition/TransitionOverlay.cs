@@ -10,7 +10,7 @@ namespace SudokuEndless;
 /// cross-fade while a slow one says what it is waiting for.
 /// </summary>
 [Tool]
-public partial class GenerationOverlay : Control
+public partial class TransitionOverlay : Control
 {
     private const double CoverInDuration = .2;
     private const double CoverOutDuration = .25;

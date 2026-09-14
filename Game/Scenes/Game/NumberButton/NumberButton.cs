@@ -4,7 +4,7 @@ using Sudoku;
 namespace SudokuEndless;
 
 /// <summary>
-/// A single digit (1-9) in the number bar, or the erase key (0, drawn as a cross).
+/// A single digit (1-9) in the number bar.
 ///
 /// The root is a real <see cref="Button"/>, so press semantics, focus and
 /// <see cref="BaseButton.Disabled"/> come from the engine. Everything visible is drawn here in the
@@ -59,15 +59,15 @@ public partial class NumberButton : Button
 	private bool _touchInput;
 	private Tween _feedback;
 
-	/// <summary>The digit this button represents (1-9), or 0 for the erase key.</summary>
-	[Export(PropertyHint.Range, "0,9")]
+	/// <summary>The digit this button represents (1-9).</summary>
+	[Export(PropertyHint.Range, "1,9")]
 	public int Number
 	{
 		get => _number;
 		set
 		{
-			_number = Mathf.Clamp(value, 0, 9);
-			AccessibilityName = _number == 0 ? "Erase" : $"Enter {_number}";
+			_number = Mathf.Clamp(value, 1, 9);
+			AccessibilityName = $"Enter {_number}";
 			QueueRedraw();
 		}
 	}
@@ -75,7 +75,7 @@ public partial class NumberButton : Button
 	public override void _Ready()
 	{
 		MouseDefaultCursorShape = CursorShape.PointingHand;
-		AccessibilityName = _number == 0 ? "Erase" : $"Enter {_number}";
+		AccessibilityName = $"Enter {_number}";
 		foreach (string state in new[] { "normal", "hover", "pressed", "hover_pressed", "focus", "disabled" })
 		{
 			AddThemeStyleboxOverride(state, new StyleBoxEmpty());
@@ -145,12 +145,6 @@ public partial class NumberButton : Button
 		_plate.BgColor = PaperStyle.Surface.Lerp(PaperStyle.Burgundy, h);
 		DrawStyleBox(_plate, rect);
 
-		if (_number == 0)
-		{
-			DrawErase(rect.Position + (rect.Size / 2), foreground);
-			return;
-		}
-
 		int fontSize = Mathf.RoundToInt(Mathf.Min(32, Size.X * .65f));
 		string text = _number.ToString();
 		float width = PaperStyle.Body.GetStringSize(text, fontSize: fontSize).X;
@@ -159,12 +153,5 @@ public partial class NumberButton : Button
 		string count = $"×{Remaining}";
 		float countWidth = PaperStyle.Body.GetStringSize(count, fontSize:13).X;
 		DrawString(PaperStyle.Body, new Vector2((Size.X-countWidth)/2,65+_depression),count,fontSize:13,modulate:foreground);
-	}
-
-	private void DrawErase(Vector2 center, Color color)
-	{
-		float arm = Mathf.Min(Size.X, Size.Y) * .18f;
-		DrawLine(center + new Vector2(-arm, -arm), center + new Vector2(arm, arm), color, 1.8f, true);
-		DrawLine(center + new Vector2(arm, -arm), center + new Vector2(-arm, arm), color, 1.8f, true);
 	}
 }

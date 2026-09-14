@@ -85,7 +85,4 @@ public partial class CellData : Resource
 		_hints.Clear();
 		EmitChanged();
 	}
-
-	/// <summary>Returns an independent deep copy so shared references cannot leak between owners.</summary>
-	public CellData Copy() => (CellData)Duplicate(true);
 }

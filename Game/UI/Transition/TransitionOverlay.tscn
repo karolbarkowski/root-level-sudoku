@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://Scenes/Game/GenerationOverlay.cs" id="1"]
+[ext_resource type="Script" path="res://UI/Transition/TransitionOverlay.cs" id="1"]
 
 [sub_resource type="Shader" id="Shader_spinner"]
 code = "shader_type canvas_item;\nrender_mode unshaded;\n\nvoid fragment() {\n    vec2 p = UV * 2.0 - 1.0;\n    float radius = length(p);\n    float angle = atan(p.y, p.x);\n    float head = fract(TIME * 0.72) * 6.2831853;\n    float distance_from_head = mod(head - angle + 6.2831853, 6.2831853);\n    float trail = 1.0 - smoothstep(0.0, 4.8, distance_from_head);\n    float ring = 1.0 - smoothstep(0.055, 0.12, abs(radius - 0.72));\n    float alpha = ring * trail;\n    COLOR = vec4(vec3(0.502, 0.212, 0.243), alpha);\n}"
@@ -8,8 +8,7 @@ code = "shader_type canvas_item;\nrender_mode unshaded;\n\nvoid fragment() {\n  
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_spinner"]
 shader = SubResource("Shader_spinner")
 
-[node name="GenerationOverlay" type="Control"]
-unique_name_in_owner = true
+[node name="TransitionOverlay" type="Control"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0

@@ -9,10 +9,10 @@ layout_mode = 2
 size_flags_horizontal = 3
 Caption = "Settings"
 Secondary = true
-Icon = ExtResource("2")
+LeadingIcon = ExtResource("2")
 [node name="Quit" parent="." instance=ExtResource("1")]
 layout_mode = 2
 size_flags_horizontal = 3
 Caption = "Quit"
 Secondary = true
-Icon = ExtResource("3")
+LeadingIcon = ExtResource("3")

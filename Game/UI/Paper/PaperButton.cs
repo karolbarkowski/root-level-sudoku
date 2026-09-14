@@ -16,7 +16,7 @@ public partial class PaperButton : Button
     [Export] public bool Ghost { get; set; }
     [Export] public int CaptionSize { get; set; } = 24;
     /// <summary>Optional icon drawn before a secondary button's caption, in the accent colour.</summary>
-    [Export] public Texture2D Icon { get; set; }
+    [Export] public Texture2D LeadingIcon { get; set; }
 
     private const float IconSize = 26;
     private const float IconGap = 10;
@@ -97,7 +97,7 @@ public partial class PaperButton : Button
 
     public override void _Ready()
     {
-        if (Icon != null) Material = PaperStyle.IconTint;
+        if (LeadingIcon != null) Material = PaperStyle.IconTint;
         MouseDefaultCursorShape = CursorShape.PointingHand;
         AccessibilityName = Secondary ? Caption : $"Start {Caption} puzzle";
         CustomMinimumSize = new Vector2(100, Ghost ? 52 : Secondary ? 66 : 68);
@@ -152,15 +152,15 @@ public partial class PaperButton : Button
         if (Secondary)
         {
             float width = PaperStyle.Body.GetStringSize(Caption, fontSize: CaptionSize).X;
-            float extra = Icon == null ? 0 : IconSize + IconGap;
+            float extra = LeadingIcon == null ? 0 : IconSize + IconGap;
             float left = (Size.X - width - extra) / 2;
             DrawString(PaperStyle.Body, new Vector2(left + extra, baseline), Caption, fontSize: CaptionSize, modulate: foreground);
-            if (Icon != null)
+            if (LeadingIcon != null)
             {
                 // Accent where it contrasts; on an orange (accent or highlighted) surface, follow the caption.
                 Color icon = Ghost ? PaperStyle.Burgundy : Accent ? foreground : PaperStyle.Burgundy.Lerp(foreground, h);
                 if (Disabled) icon.A = .35f;
-                DrawTextureRect(Icon, new Rect2(left, (Size.Y - IconSize) / 2 + _depression, IconSize, IconSize), false, icon);
+                DrawTextureRect(LeadingIcon, new Rect2(left, (Size.Y - IconSize) / 2 + _depression, IconSize, IconSize), false, icon);
             }
         }
         else
@@ -174,6 +174,4 @@ public partial class PaperButton : Button
         }
         if (HasFocus() && !_touchInput) DrawRect(rect.Grow(-5), PaperStyle.Paper.Lerp(PaperStyle.Burgundy, 1 - h), false, 1);
     }
-
-    private void Border(Rect2 rect, Color color) => PaperStyle.DrawBorder(this, rect, color);
 }
