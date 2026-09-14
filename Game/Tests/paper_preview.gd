@@ -70,11 +70,19 @@ func run():
     click.button_index = MOUSE_BUTTON_LEFT
     click.pressed = false
     root.push_input(click, true)
-    await create_timer(.4).timeout
-    check(current_scene.scene_file_path.ends_with("Main.tscn"), "Mouse click on Easy must start gameplay")
+    var deadline = Time.get_ticks_msec() + 3000
+    while (current_scene == null or not current_scene.scene_file_path.ends_with("Main.tscn")) and Time.get_ticks_msec() < deadline:
+        await process_frame
+    check(current_scene != null and current_scene.scene_file_path.ends_with("Main.tscn"), "Mouse click on Easy must start gameplay")
     var board = current_scene.get_node_or_null("%Board")
     check(board != null, "Gameplay board must exist after selecting Easy")
     if board != null:
+        var board_deadline = Time.get_ticks_msec() + 5000
+        while Time.get_ticks_msec() < board_deadline:
+            var total = 0
+            for value in board.GetValueCounts(): total += value
+            if total > 0: break
+            await process_frame
         var counts = board.GetValueCounts()
         var givens = 0
         for number in counts:

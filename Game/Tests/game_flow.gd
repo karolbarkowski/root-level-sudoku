@@ -36,8 +36,13 @@ func run():
     check(not current_scene.has_node("Hero/Nine"), "Title numeral should be removed")
     await capture("start")
     current_scene.get_node("Menu/Difficulties/Easy").emit_signal("pressed")
+    await create_timer(.2).timeout
+    if current_scene != null and current_scene.scene_file_path.ends_with("Main.tscn") and current_scene.get_node("%GenerationOverlay").visible:
+        await capture("generating")
     await create_timer(1.5).timeout
     var board = current_scene.get_node("%Board")
+    check(not current_scene.get_node("%GenerationOverlay").visible, "Generation overlay exits after the puzzle is ready")
+    check(board.visible, "Generated board becomes visible after loading")
     var empty = []
     for tile in tiles(board):
         if not tile.Data.IsGiven: empty.append(tile)

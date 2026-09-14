@@ -5,6 +5,10 @@
 [ext_resource type="PackedScene" path="res://Scenes/Game/Board/Board.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://UI/Paper/PaperIconButton.tscn" id="5"]
 [ext_resource type="PackedScene" path="res://Scenes/Game/NumberButton/NumberButton.tscn" id="6"]
+[ext_resource type="PackedScene" path="res://Scenes/Game/GenerationOverlay.tscn" id="7"]
+[ext_resource type="Texture2D" path="res://Resources/icons/undo.svg" id="8"]
+[ext_resource type="Texture2D" path="res://Resources/icons/redo.svg" id="9"]
+[ext_resource type="Texture2D" path="res://Resources/icons/edit.svg" id="10"]
 [node name="Main" type="Control"]
 anchors_preset = 15
 anchor_right = 1.0
@@ -39,6 +43,8 @@ layout_mode = 2
 custom_minimum_size = Vector2(476,476)
 [node name="Board" parent="Sheet/BoardArea" instance=ExtResource("4")]
 unique_name_in_owner = true
+[node name="GenerationOverlay" parent="." instance=ExtResource("7")]
+visible = false
 [node name="Actions" type="HBoxContainer" parent="Sheet"]
 layout_mode = 2
 theme_override_constants/separation = 8
@@ -50,6 +56,7 @@ size_flags_horizontal = 3
 Symbol = 3
 Caption = "Undo"
 Accent = true
+Icon = ExtResource("8")
 
 
 [node name="RedoButton" parent="Sheet/Actions" instance=ExtResource("5")]
@@ -59,6 +66,7 @@ size_flags_horizontal = 3
 Symbol = 4
 Caption = "Redo"
 Accent = true
+Icon = ExtResource("9")
 
 
 [node name="ModeToggle" parent="Sheet/Actions" instance=ExtResource("5")]
@@ -69,6 +77,7 @@ Symbol = 6
 Caption = "Notes OFF"
 Accent = true
 toggle_mode = true
+Icon = ExtResource("10")
 
 [node name="NumberBar" type="GridContainer" parent="Sheet"]
 unique_name_in_owner = true

@@ -83,7 +83,7 @@ public partial class BoardView : Control
 				RenderAll();
 				ApplyHighlights();
 			}
-			else NewGame(GameSession.Difficulty);
+			else LoadEmpty();
 		}
 	}
 
@@ -94,6 +94,14 @@ public partial class BoardView : Control
 	{
 		EnsureCells();
 		_game = SudokuGenerator.Generate(difficulty);
+		InstallGeneratedGame(_game, difficulty);
+	}
+
+	/// <summary>Installs a board generated off the main thread. Must be called on the Godot thread.</summary>
+	public void InstallGeneratedGame(Board generated, SudokuGenerator.Difficulty difficulty)
+	{
+		EnsureCells();
+		_game = generated;
 		_selectedIndex = -1;
 
 		for (int i = 0; i < BoardGeometry.CellCount; i++)

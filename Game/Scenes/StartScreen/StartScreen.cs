@@ -157,16 +157,22 @@ public partial class StartScreen : Control
 	{
 		if (_leaving) return;
 		_leaving = true;
-		if (UiAnimationSettings.Default.Enabled)
+		if (UiAnimationSettings.Default.Enabled && path != null && !path.Contains("/Game/"))
 			await ToSignal(GetTree().CreateTimer(.10), SceneTreeTimer.SignalName.Timeout);
 		if (!IsInsideTree()) return;
 		if (path == null) { GetTree().Quit(); return; }
-		if (path.Contains("/Game/") && !resume)
+		if (path != null && path.Contains("/Game/") && !resume)
 		{
 			GameSession.Clear();
 			GameSession.Difficulty = difficulty;
 		}
-		Error error = GetTree().ChangeSceneToFile(path);
+        // Route both new puzzles and resumed games through the lightweight handoff scene.
+        // Main.tscn still needs to build its board and controls, so loading it directly
+        // makes the start screen freeze before the first frame of gameplay is visible.
+        string destination = path != null && path.Contains("/Game/")
+            ? "res://Scenes/Game/Loading.tscn"
+            : path;
+		Error error = GetTree().ChangeSceneToFile(destination);
 		if (error != Error.Ok) { _leaving = false; GD.PushError($"Cannot open {path}: {error}"); }
 	}
 

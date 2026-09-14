@@ -1,4 +1,7 @@
 using Godot;
+using System;
+using System.Threading.Tasks;
+using Generators.Sudoku;
 using Sudoku;
 namespace SudokuEndless;
 
@@ -22,12 +25,17 @@ public partial class Main : Control
     private bool _leaving;
     private bool _previousBack;
     private readonly NumberButton[] _keys = new NumberButton[9];
+    private GenerationOverlay _generationOverlay;
+    private Task<Board> _generationTask;
+    private int _generationToken;
+    private bool _generating;
 
     public override void _Ready()
     {
         _sheet = GetNode<Control>("%Sheet");
         _board = GetNode<BoardView>("%Board");
         _notes = GetNode<PaperIconButton>("%ModeToggle");
+        _generationOverlay = GetNode<GenerationOverlay>("%GenerationOverlay");
         _undo = GetNode<PaperIconButton>("%UndoButton");
         _redo = GetNode<PaperIconButton>("%RedoButton");
         GetNode<Label>("%Difficulty").Text = GameSession.Difficulty.ToString().ToUpperInvariant();
@@ -52,11 +60,14 @@ public partial class Main : Control
         Resized += Layout;
         Layout();
         SetNotes(GameSession.NotesMode);
+        if (!Engine.IsEditorHint() && !GameSession.HasPuzzle)
+            BeginGeneration(GameSession.Difficulty);
         if (!Engine.IsEditorHint())
         {
             _previousBack = GetTree().QuitOnGoBack;
             GetTree().QuitOnGoBack = false;
-            PlayEntry();
+            if (GameSession.HasPuzzle)
+                PlayEntry();
         }
     }
 
@@ -91,6 +102,9 @@ public partial class Main : Control
     {
         if (Engine.IsEditorHint() && IsNodeReady() && IsInstanceValid(_sheet) && Size.X > 0 && Size.Y > 0)
             Layout();
+
+        if (!_generating || _generationTask == null || !_generationTask.IsCompleted) return;
+        FinishGeneration(_generationTask, _generationToken);
     }
 
     private void SetNotes(bool enabled)
@@ -106,7 +120,7 @@ public partial class Main : Control
 
     private void EnterNumber(int number)
     {
-        if (!_board.CanEdit) return;
+        if (_generating || !_board.CanEdit) return;
         _activeDigit = number;
         if (_notes.ButtonPressed)
             _board.ToggleSelectedHint(number);
@@ -153,8 +167,9 @@ public partial class Main : Control
         _lastSelectedIndex = _board.SelectedIndex;
         _lastSelectedValue = selectedValue;
         int[] counts = _board.GetValueCounts();
-        _undo.Disabled = !_board.CanUndo;
-        _redo.Disabled = !_board.CanRedo;
+        _undo.Disabled = _generating || !_board.CanUndo;
+        _redo.Disabled = _generating || !_board.CanRedo;
+        _notes.Disabled = _generating;
         _undo.RefreshFeedback();
         _redo.RefreshFeedback();
         // Keep keys available: nine occurrences do not guarantee nine correct placements.
@@ -176,6 +191,45 @@ public partial class Main : Control
         _leaving = true;
         var error = GetTree().ChangeSceneToFile("res://Scenes/StartScreen/StartScreen.tscn");
         if (error != Error.Ok) { _leaving = false; GD.PushError($"Cannot open menu: {error}"); }
+    }
+
+    private void BeginGeneration(SudokuGenerator.Difficulty difficulty)
+    {
+        _generating = true;
+        _board.Visible = false;
+        _generationOverlay.Visible = true;
+        _generationOverlay.Modulate = Colors.White;
+        _sheet.GetNode<Control>("Navigation").Visible = false;
+        _sheet.GetNode<Control>("Actions").Visible = false;
+        _sheet.GetNode<Control>("NumberBar").Visible = false;
+        _notes.Disabled = true;
+        _undo.Disabled = true;
+        _redo.Disabled = true;
+        foreach (NumberButton key in _keys)
+            if (key != null) key.Disabled = true;
+
+        int token = ++_generationToken;
+        _generationTask = Task.Run(() => SudokuGenerator.Generate(difficulty));
+    }
+
+    private void FinishGeneration(Task<Board> task, int token)
+    {
+        _generating = false;
+        _generationTask = null;
+        if (_leaving || token != _generationToken || task.IsCanceled || task.IsFaulted)
+        {
+            if (task.IsFaulted) GD.PushError($"Puzzle generation failed: {task.Exception?.GetBaseException().Message}");
+            return;
+        }
+
+        _board.InstallGeneratedGame(task.Result, GameSession.Difficulty);
+        _board.Visible = true;
+        _sheet.GetNode<Control>("Navigation").Visible = true;
+        _sheet.GetNode<Control>("Actions").Visible = true;
+        _sheet.GetNode<Control>("NumberBar").Visible = true;
+        _generationOverlay.HideAnimated();
+        Refresh();
+        PlayEntry();
     }
 
     private void OnSolved()
@@ -216,6 +270,8 @@ public partial class Main : Control
 
     public override void _ExitTree()
     {
+        ++_generationToken;
+        _generating = false;
         Resized -= Layout;
         _entry?.Kill();
         if (!Engine.IsEditorHint()) GetTree().QuitOnGoBack = _previousBack;

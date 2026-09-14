@@ -20,6 +20,7 @@ Resources/default_tile_textures.tres.
 - PaperMenu.tscn / PaperFooter.tscn: difficulty and navigation composition.
 - PaperButton.tscn: reusable rounded text button, including the continue action.
 - PaperIconButton.tscn: reusable animated back, undo, redo and notes icons.
+- GenerationOverlay.tscn: full-screen loading state with an animated vector spinner.
 - NumberButton.tscn: bottom-aligned digit bar with remaining count; selection animates
   height and orange fill over 220 ms. Disabled animation settings apply immediately.
 
@@ -28,6 +29,13 @@ with the board centered in between. Entry animations finish within one second.
 GameSession retains the live puzzle and value-move history across scene changes;
 it does not persist across application restarts.
 
+Fresh puzzles are generated on a worker task after the game scene has entered. The
+GenerationOverlay blocks input and shows an animated orange spinner while the pure
+managed generator runs. The completed Board is installed on the Godot thread, the
+overlay fades away, and the existing game controls enter in a short stagger. Resume
+loads immediately because it already has a Board. Leaving during generation invalidates
+the request so a late result cannot affect a later scene.
+
 ## Verification
 Build Game/sudoku.csproj, then run Godot with --path Game and one of:
 - --script res://Tests/game_flow.gd
@@ -35,5 +43,5 @@ Build Game/sudoku.csproj, then run Godot with --path Game and one of:
 - --script res://Tests/paper_entry.gd
 
 Captures are written under output/. Checks cover portrait sizes, selection animation,
-bottom alignment, remaining counts, menu/continue, notes, undo/redo, and
+bottom alignment, remaining counts, generation/loading, menu/continue, notes, undo/redo, and
 new-game/completion behavior. Physical Android touch and safe areas require device testing.
