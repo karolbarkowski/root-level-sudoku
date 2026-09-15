@@ -13,6 +13,7 @@ config_version=5
 config/name="sudoku"
 run/main_scene="res://Scenes/StartScreen/StartScreen.tscn"
 config/features=PackedStringArray("4.7", "C#", "Mobile")
+boot_splash/bg_color=Color(0.153, 0.184, 0.2, 1)
 boot_splash/show_image=false
 config/icon="res://Resources/android/play_store_512.png"
 
@@ -45,3 +46,4 @@ project/assembly_name="sudoku"
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="mobile"
 textures/vram_compression/import_etc2_astc=true
+environment/defaults/default_clear_color=Color(0.153, 0.184, 0.2, 1)
