@@ -72,6 +72,54 @@ public class Board
     internal RuleBasedGrader RuleGrader => _hintGrader;
     internal UniquenessGrader UniquenessGrader => _uniquenessGrader;
 
+    /// <summary>The 81 cell values, row by row (0 = empty).</summary>
+    public int[] GetCells()
+    {
+        int[] cells = new int[state.Length];
+        for (int i = 0; i < cells.Length; i++) cells[i] = state[i];
+        return cells;
+    }
+
+    /// <summary>Moves that <see cref="Undo"/> can take back, oldest first.</summary>
+    public MoveRecord[] GetUndoHistory() => OldestFirst(_undo);
+
+    /// <summary>Moves that <see cref="Redo"/> can re-apply, oldest first (the next redo is last).</summary>
+    public MoveRecord[] GetRedoHistory() => OldestFirst(_redo);
+
+    private static MoveRecord[] OldestFirst(Stack<MoveRecord>? stack)
+    {
+        if (stack is not { Count: > 0 }) return [];
+        MoveRecord[] records = stack.ToArray(); // top of the stack first
+        Array.Reverse(records);
+        return records;
+    }
+
+    /// <summary>
+    /// Rebuilds a board saved with <see cref="GetCells"/>, <see cref="GetUndoHistory"/> and
+    /// <see cref="GetRedoHistory"/>. Throws <see cref="ArgumentException"/> when the data is not a
+    /// valid board, so a damaged save can be rejected rather than loaded.
+    /// </summary>
+    public static Board Restore(ReadOnlySpan<int> cells, IEnumerable<MoveRecord> undoHistory, IEnumerable<MoveRecord> redoHistory)
+    {
+        if (cells.Length != Size * Size)
+            throw new ArgumentException("A board has 81 cells", nameof(cells));
+
+        var board = new Board(new int[Size, Size]);
+        for (int i = 0; i < cells.Length; i++)
+        {
+            if (cells[i] is < 0 or > 9) throw new ArgumentException($"Cell {i} holds {cells[i]}", nameof(cells));
+            board.state[i] = (byte)cells[i];
+        }
+        foreach (MoveRecord record in undoHistory) (board._undo ??= new()).Push(Validated(record));
+        foreach (MoveRecord record in redoHistory) (board._redo ??= new()).Push(Validated(record));
+        return board;
+    }
+
+    private static MoveRecord Validated(MoveRecord record) =>
+        record is { Row: >= 0 and < Size, Col: >= 0 and < Size, PreviousValue: >= 0 and <= 9, NewValue: >= 0 and <= 9 }
+            ? record
+            : throw new ArgumentException($"Invalid history entry {record}");
+
     public bool CanUndo => _undo is { Count: > 0 };
     public bool CanRedo => _redo is { Count: > 0 };
 

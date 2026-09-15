@@ -37,6 +37,7 @@ func capture(label: String):
     check(root.get_texture().get_image().save_png(output_dir.path_join(label + ".png")) == OK, "Screenshot failed")
 
 func run():
+    DirAccess.remove_absolute(ProjectSettings.globalize_path("user://session.json"))
     output_dir = ProjectSettings.globalize_path("res://").path_join("../output/game-redesign").simplify_path()
     DirAccess.make_dir_recursive_absolute(output_dir)
     change_scene_to_file("res://Scenes/StartScreen/StartScreen.tscn")

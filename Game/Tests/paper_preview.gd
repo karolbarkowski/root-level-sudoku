@@ -15,6 +15,7 @@ func settle():
 func _initialize():
     run.call_deferred()
 func run():
+    DirAccess.remove_absolute(ProjectSettings.globalize_path("user://session.json"))
     var output_dir = ProjectSettings.globalize_path("res://").path_join("../output/start-screen").simplify_path()
     check(DirAccess.make_dir_recursive_absolute(output_dir) == OK, "Preview output directory must be writable")
     var screen = load("res://Scenes/StartScreen/StartScreen.tscn").instantiate()

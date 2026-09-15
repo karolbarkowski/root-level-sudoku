@@ -81,6 +81,9 @@ public partial class Main : Control, ITransitionScreen
             _keys[n - 1] = key;
         }
         _board.BoardChanged += Refresh;
+        // Every move, note and selection change is written straight away: a phone may kill the app
+        // at any moment without giving it a chance to save on the way out.
+        if (!Engine.IsEditorHint()) _board.BoardChanged += GameSession.Save;
         _board.SelectionChanged += OnSelectionChanged;
         _board.Solved += OnSolved;
         Resized += Layout;
@@ -144,7 +147,11 @@ public partial class Main : Control, ITransitionScreen
 
     private void SetNotes(bool enabled)
     {
-        if (!Engine.IsEditorHint()) GameSession.NotesMode = enabled;
+        if (!Engine.IsEditorHint() && GameSession.NotesMode != enabled)
+        {
+            GameSession.NotesMode = enabled;
+            GameSession.Save();
+        }
         _notes.Caption = enabled ? "Notes ON" : "Notes OFF";
         _notes.AccessibilityName = _notes.Caption;
         _notes.TooltipText = _notes.Caption;

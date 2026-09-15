@@ -101,6 +101,36 @@ public class BoardHistoryTests
     }
 
     [Fact]
+    public void Restore_RebuildsValues_AndBothHistories()
+    {
+        Board original = EmptyBoard();
+        original.PlaceMove(0, 0, 5);
+        original.PlaceMove(4, 4, 7);
+        original.PlaceMove(8, 8, 2);
+        original.Undo(); // (8,8) moves to the redo history
+
+        Board restored = Board.Restore(original.GetCells(), original.GetUndoHistory(), original.GetRedoHistory());
+
+        restored.GetCells().ShouldBe(original.GetCells());
+        restored.Undo().ShouldBe(true);
+        restored[4, 4].ShouldBe(0);
+        restored.Redo().ShouldBe(true);
+        restored.Redo().ShouldBe(true);
+        restored[8, 8].ShouldBe(2);
+        restored.CanRedo.ShouldBe(false);
+    }
+
+    [Fact]
+    public void Restore_WithInvalidData_Throws()
+    {
+        Should.Throw<ArgumentException>(() => Board.Restore(new int[80], [], []));
+        Should.Throw<ArgumentException>(() => Board.Restore(new int[81], [new MoveRecord(9, 0, 0, 1)], []));
+        int[] cells = new int[81];
+        cells[3] = 10;
+        Should.Throw<ArgumentException>(() => Board.Restore(cells, [], []));
+    }
+
+    [Fact]
     public void Restart_ClearsPlayerCells_KeepsClues_AndForgetsHistory()
     {
         var clues = new int[9, 9];

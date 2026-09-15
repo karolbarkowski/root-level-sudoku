@@ -14,7 +14,7 @@ config/name="sudoku"
 run/main_scene="res://Scenes/StartScreen/StartScreen.tscn"
 config/features=PackedStringArray("4.7", "C#", "Mobile")
 boot_splash/show_image=false
-config/icon="res://icon.svg"
+config/icon="res://Resources/android/play_store_512.png"
 
 [autoload]
 

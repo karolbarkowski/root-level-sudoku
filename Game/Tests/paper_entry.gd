@@ -7,6 +7,7 @@ func check(ok: bool, message: String):
 func _initialize():
     run.call_deferred()
 func run():
+    DirAccess.remove_absolute(ProjectSettings.globalize_path("user://session.json"))
     Engine.max_fps = 60
     var packed = load("res://Scenes/StartScreen/StartScreen.tscn")
     var settings = load("res://Resources/UiAnimationDefault.tres")

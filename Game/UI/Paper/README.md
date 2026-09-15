@@ -25,8 +25,8 @@ Resources/default_tile_textures.tres.
 
 The portrait game places navigation at the top and the number strip at the bottom,
 with the board centered in between. Entry animations finish within one second.
-GameSession retains the live puzzle and value-move history across scene changes;
-it does not persist across application restarts.
+GameSession retains the live puzzle, pencil marks and undo history across scene changes,
+and writes it to user://session.json after every change so it survives the app being killed.
 
 Every scene change goes through the SceneTransition autoload (UI/Transition). The
 outgoing scene plays its exit while a cover fades in; the next scene loads on a worker
@@ -41,6 +41,8 @@ Build Game/sudoku.csproj, then run Godot with --path Game and one of:
 - --script res://Tests/game_flow.gd
 - --script res://Tests/paper_preview.gd
 - --script res://Tests/paper_entry.gd
+- --script res://Tests/persistence.gd -- --phase=play, then the same with --phase=resume
+  (two runs: the first kills its own process, the second checks the game comes back)
 
 Captures are written under output/. Checks cover portrait sizes, selection animation,
 bottom alignment, remaining counts, generation/loading, menu/continue, notes, undo/redo, and
