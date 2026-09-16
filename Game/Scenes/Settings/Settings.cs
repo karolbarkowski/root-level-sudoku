@@ -34,9 +34,10 @@ public partial class Settings : Control
         back.Caption = "Back";
         back.Secondary = true;
         back.LeadingIcon = GD.Load<Texture2D>("res://Resources/icons/arrow-left.svg");
-        back.CustomMinimumSize = new Vector2(PaperStyle.Body.GetStringSize("Back", fontSize: back.CaptionSize).X + 80, 52);
         back.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
         back.Pressed += () => SceneTransition.GoTo(SceneTransition.StartScreenPath);
         content.AddChild(back);
+        // After AddChild: PaperButton._Ready resets the minimum size. Caption plus icon plus side padding.
+        back.CustomMinimumSize = new Vector2(PaperStyle.Body.GetStringSize("Back", fontSize: back.CaptionSize).X + 140, 56);
     }
 }

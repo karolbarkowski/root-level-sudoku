@@ -3,15 +3,34 @@ using System;
 
 namespace SudokuEndless;
 
-/// <summary>A labeled setting with explicit ON/OFF choices and an optional volume slider.</summary>
+/// <summary>A labeled setting with an ON/OFF toggle and an optional volume slider.</summary>
 public partial class SettingRow : VBoxContainer
 {
-    private static StyleBoxFlat Surface(Color color) => new()
+    private const int GrabberSize = 30;
+    private static ImageTexture _grabber;
+
+    /// <summary>A white, anti-aliased disc for the slider handle; shared by every row.</summary>
+    private static ImageTexture Grabber => _grabber ??= Disc(GrabberSize, PaperStyle.Ink);
+
+    private static StyleBoxFlat Surface(Color color, int radius = 10) => new()
     {
-        BgColor = color, CornerRadiusTopLeft = 10, CornerRadiusTopRight = 10,
-        CornerRadiusBottomLeft = 10, CornerRadiusBottomRight = 10,
+        BgColor = color, CornerRadiusTopLeft = radius, CornerRadiusTopRight = radius,
+        CornerRadiusBottomLeft = radius, CornerRadiusBottomRight = radius,
         ContentMarginLeft = 4, ContentMarginRight = 4
     };
+
+    private static ImageTexture Disc(int size, Color color)
+    {
+        var image = Image.CreateEmpty(size, size, false, Image.Format.Rgba8);
+        float radius = size / 2f;
+        for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float distance = new Vector2(x + .5f - radius, y + .5f - radius).Length();
+                image.SetPixel(x, y, color with { A = Mathf.Clamp(radius - distance, 0, 1) });
+            }
+        return ImageTexture.CreateFromImage(image);
+    }
 
     public void Configure(string title, string description, bool enabled, Action<bool> changed,
         int volume = 0, Action<int> volumeChanged = null)
@@ -29,61 +48,77 @@ public partial class SettingRow : VBoxContainer
         detail.AddThemeFontSizeOverride("font_size", 15);
         detail.AddThemeColorOverride("font_color", PaperStyle.Muted);
         copy.AddChild(detail);
-        var panel = new PanelContainer { SizeFlagsVertical = SizeFlags.ShrinkCenter };
-        panel.AddThemeStyleboxOverride("panel", Surface(PaperStyle.Surface));
-        line.AddChild(panel);
-        var choices = new HBoxContainer();
+
+        // One button covers the whole switch, so a tap anywhere on it flips the state.
+        var toggle = new Button { ToggleMode = true, SizeFlagsVertical = SizeFlags.ShrinkCenter,
+            CustomMinimumSize = new Vector2(106, 44), AccessibilityName = title,
+            MouseDefaultCursorShape = CursorShape.PointingHand };
+        toggle.AddThemeStyleboxOverride("normal", Surface(PaperStyle.Surface));
+        toggle.AddThemeStyleboxOverride("pressed", Surface(PaperStyle.Surface));
+        toggle.AddThemeStyleboxOverride("hover", Surface(PaperStyle.Surface.Lightened(.1f)));
+        toggle.AddThemeStyleboxOverride("hover_pressed", Surface(PaperStyle.Surface.Lightened(.1f)));
+        toggle.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
+        line.AddChild(toggle);
+        var choices = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
         choices.AddThemeConstantOverride("separation", 2);
-        panel.AddChild(choices);
-        var group = new ButtonGroup();
-        Button MakeChoice(string text)
+        choices.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        choices.OffsetLeft = 4;
+        choices.OffsetRight = -4;
+        toggle.AddChild(choices);
+        (PanelContainer Chip, Label Text) MakeChoice(string text)
         {
-            var button = new Button { Text = text, ToggleMode = true, ButtonGroup = group,
-                CustomMinimumSize = new Vector2(48, 44), AccessibilityName = title + " " + text };
-            button.AddThemeFontSizeOverride("font_size", 14);
-            button.AddThemeStyleboxOverride("normal", Surface(Colors.Transparent));
-            button.AddThemeStyleboxOverride("hover", Surface(PaperStyle.Surface.Lightened(.15f)));
-            button.AddThemeStyleboxOverride("pressed", Surface(PaperStyle.Burgundy));
-            button.AddThemeStyleboxOverride("hover_pressed", Surface(PaperStyle.Burgundy.Lightened(.1f)));
-            button.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
-            button.AddThemeColorOverride("font_color", PaperStyle.Muted);
-            button.AddThemeColorOverride("font_pressed_color", PaperStyle.Ink);
-            choices.AddChild(button);
-            return button;
+            var chip = new PanelContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill, MouseFilter = MouseFilterEnum.Ignore };
+            var caption = new Label { Text = text, HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center };
+            caption.AddThemeFontSizeOverride("font_size", 14);
+            chip.AddChild(caption);
+            choices.AddChild(chip);
+            return (chip, caption);
         }
-        var on = MakeChoice("ON");
         var off = MakeChoice("OFF");
-        on.SetPressedNoSignal(enabled);
-        off.SetPressedNoSignal(!enabled);
+        var on = MakeChoice("ON");
+        void Paint(bool value)
+        {
+            on.Chip.AddThemeStyleboxOverride("panel", Surface(value ? PaperStyle.Burgundy : Colors.Transparent));
+            off.Chip.AddThemeStyleboxOverride("panel", Surface(value ? Colors.Transparent : PaperStyle.Burgundy));
+            on.Text.AddThemeColorOverride("font_color", value ? PaperStyle.Ink : PaperStyle.Muted);
+            off.Text.AddThemeColorOverride("font_color", value ? PaperStyle.Muted : PaperStyle.Ink);
+        }
+        toggle.SetPressedNoSignal(enabled);
+        Paint(enabled);
+
         HSlider slider = null;
-        HBoxContainer volumeRow = null;
         void Apply(bool value)
         {
+            Paint(value);
             changed(value);
             if (slider == null) return;
             slider.Editable = value;
             slider.FocusMode = value ? FocusModeEnum.All : FocusModeEnum.None;
-            volumeRow.Modulate = new Color(1, 1, 1, value ? 1 : .35f);
+            slider.Modulate = new Color(1, 1, 1, value ? 1 : .35f);
         }
-        on.Toggled += value => { if (value) Apply(true); };
-        off.Toggled += value => { if (value) Apply(false); };
+        toggle.Toggled += Apply;
         if (volumeChanged == null) return;
-        volumeRow = new HBoxContainer();
-        volumeRow.AddThemeConstantOverride("separation", 12);
-        AddChild(volumeRow);
-        volumeRow.AddChild(new Label { Text = "1" });
+
         slider = new HSlider { MinValue = 1, MaxValue = 10, Step = 1, Value = volume,
-            TickCount = 10, TicksOnBorders = true, SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
             CustomMinimumSize = new Vector2(0, 44), AccessibilityName = title + " volume",
-            Editable = enabled, FocusMode = enabled ? FocusModeEnum.All : FocusModeEnum.None };
-        slider.AddThemeStyleboxOverride("slider", Surface(PaperStyle.Surface));
-        slider.AddThemeStyleboxOverride("grabber_area", Surface(PaperStyle.Burgundy));
-        slider.AddThemeStyleboxOverride("grabber_area_highlight", Surface(PaperStyle.Burgundy.Lightened(.1f)));
-        volumeRow.AddChild(slider);
-        volumeRow.AddChild(new Label { Text = "10" });
-        var readout = new Label { Text = volume + "/10", CustomMinimumSize = new Vector2(52, 0), HorizontalAlignment = HorizontalAlignment.Right };
-        volumeRow.AddChild(readout);
-        volumeRow.Modulate = new Color(1, 1, 1, enabled ? 1 : .35f);
-        slider.ValueChanged += value => { readout.Text = (int)value + "/10"; volumeChanged((int)value); };
+            Editable = enabled, FocusMode = enabled ? FocusModeEnum.All : FocusModeEnum.None,
+            Modulate = new Color(1, 1, 1, enabled ? 1 : .35f) };
+        // The track's height is its style's vertical margins: a 4 px line across the full width.
+        StyleBoxFlat Track(Color color)
+        {
+            StyleBoxFlat box = Surface(color, 2);
+            box.ContentMarginTop = box.ContentMarginBottom = 2;
+            return box;
+        }
+        slider.AddThemeStyleboxOverride("slider", Track(PaperStyle.Surface.Lightened(.1f)));
+        slider.AddThemeStyleboxOverride("grabber_area", Track(PaperStyle.Burgundy));
+        slider.AddThemeStyleboxOverride("grabber_area_highlight", Track(PaperStyle.Burgundy.Lightened(.1f)));
+        slider.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
+        foreach (string icon in new[] { "grabber", "grabber_highlight", "grabber_disabled" })
+            slider.AddThemeIconOverride(icon, Grabber);
+        AddChild(slider);
+        slider.ValueChanged += value => volumeChanged((int)value);
     }
 }
