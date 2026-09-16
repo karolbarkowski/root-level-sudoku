@@ -75,7 +75,8 @@ func run():
             break
     board.SelectCell(given_index)
     await create_timer(.28).timeout
-    check(current_scene.get_node("%NumberBar/Digit4").SelectionProgress < .1, "Clue cell clears number selection")
+    check(board.SelectedIndex == empty[0].Index, "Clue tap preserves the editable cell selection")
+    check(current_scene.get_node("%NumberBar/Digit4").SelectionProgress > .9, "Clue tap preserves number selection")
     board.SelectCell(empty[1].Index)
     await create_timer(.28).timeout
     check(current_scene.get_node("%NumberBar/Digit4").SelectionProgress < .1, "Empty cell clears number selection")

@@ -172,6 +172,5 @@ public partial class PaperButton : Button
             DrawLine(new Vector2(x - 23, y), new Vector2(x, y), foreground, 1.6f, true);
             DrawPolyline(new[] { new Vector2(x - 10, y - 10), new Vector2(x, y), new Vector2(x - 10, y + 10) }, foreground, 1.6f, true);
         }
-        if (HasFocus() && !_touchInput) DrawRect(rect.Grow(-5), PaperStyle.Paper.Lerp(PaperStyle.Burgundy, 1 - h), false, 1);
     }
 }

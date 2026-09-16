@@ -7,22 +7,30 @@ public partial class Settings : Control
 {
 	public override void _Ready()
 	{
-		var music = GetNode<PaperButton>("%MusicToggle");
-		music.SetPressedNoSignal(MusicSettings.Enabled);
-		void RefreshMusic()
-		{
-			music.Caption = MusicSettings.Enabled ? "Music: ON" : "Music: OFF";
-			music.Accent = MusicSettings.Enabled;
-			music.AccessibilityName = $"Background music, {(MusicSettings.Enabled ? "on" : "off")}";
-			music.QueueRedraw();
-		}
-		RefreshMusic();
-		music.Toggled += enabled => { MusicSettings.SetEnabled(enabled); RefreshMusic(); };
+		Bind("MusicToggle", "Music", MusicSettings.Enabled, MusicSettings.SetEnabled);
+		Bind("SoundToggle", "Sound", MusicSettings.SoundEnabled, MusicSettings.SetSoundEnabled);
+		Bind("HighlightToggle", "Highlight", MusicSettings.HighlightEnabled, MusicSettings.SetHighlightEnabled);
+		Bind("RemainingToggle", "Show remaining numbers", MusicSettings.ShowRemaining, MusicSettings.SetShowRemaining);
 		Button back = GetNodeOrNull<Button>("%BackButton");
 		if (back != null)
 		{
 			back.Pressed += OnBack;
 		}
+	}
+
+	private void Bind(string name, string caption, bool initial, System.Action<bool> apply)
+	{
+		var button = GetNode<PaperButton>("%" + name);
+		void Refresh(bool enabled)
+		{
+			button.Caption = $"{caption}: {(enabled ? "ON" : "OFF")}";
+			button.Accent = enabled;
+			button.AccessibilityName = button.Caption;
+			button.QueueRedraw();
+		}
+		button.SetPressedNoSignal(initial);
+		Refresh(initial);
+		button.Toggled += enabled => { apply(enabled); Refresh(enabled); };
 	}
 
 	private void OnBack() => SceneTransition.GoTo(SceneTransition.StartScreenPath);

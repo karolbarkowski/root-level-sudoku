@@ -64,7 +64,6 @@ public partial class PaperIconButton : Button
 		Color ink = PaperStyle.Ink;
 		if (Disabled) { fill.A = .45f; ink.A = .3f; }
 		DrawCircle(center, radius - _feedback, fill);
-		if (HasFocus() && !_touch) DrawArc(center, radius + 3, 0, Mathf.Tau, 48, PaperStyle.Burgundy, 2, true);
 		DrawSetTransform(center, 0, Vector2.One * iconScale);
 		if (SvgIcon != null)
 		{

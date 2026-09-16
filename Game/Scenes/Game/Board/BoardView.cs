@@ -95,6 +95,11 @@ public partial class BoardView : Control
 			_game = GameSession.ActiveBoard;
 			Array.Copy(GameSession.Cells, _cells, _cells.Length);
 			_selectedIndex = GameSession.SelectedIndex;
+			if (_selectedIndex >= 0 && (_selectedIndex >= _cells.Length || _cells[_selectedIndex].IsGiven))
+			{
+				_selectedIndex = -1;
+				GameSession.SelectedIndex = -1;
+			}
 		}
 		else LoadEmpty();
 
@@ -520,6 +525,7 @@ public partial class BoardView : Control
 	public void SelectCell(int index)
 	{
 		if (index < 0 || index >= _cells.Length) return;
+		if (_cells[index] == null || _cells[index].IsGiven) return;
 		_selectedIndex = index;
 		GameSession.SelectedIndex = index;
 		ApplyHighlights();
@@ -570,6 +576,6 @@ public partial class BoardView : Control
 			return TileHighlight.Selected;
 		}
 
-		return BoardGeometry.ArePeers(index, _selectedIndex) ? TileHighlight.Peer : TileHighlight.None;
+		return MusicSettings.HighlightEnabled && BoardGeometry.ArePeers(index, _selectedIndex) ? TileHighlight.Peer : TileHighlight.None;
 	}
 }

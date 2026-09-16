@@ -186,7 +186,7 @@ public partial class NumberButton : Button
 		float gap = Mathf.Min(3, available / 26);
 		float boxHeight = Mathf.Min(16, Mathf.Max(0, (available - gap * 8) / 9));
 		float boxWidth = Mathf.Max(0, rect.Size.X - 10);
-		for (int i = 0; i < _boxes.Length; i++)
+		for (int i = 0; MusicSettings.ShowRemaining && i < _boxes.Length; i++)
 		{
 			float progress = _boxes[i];
 			if (progress <= .001f || boxHeight <= 0) continue;
