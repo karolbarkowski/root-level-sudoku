@@ -30,6 +30,8 @@ public partial class Settings : Control
         Heading("BOARD");
         Row("Highlight", "Shade the selected row, column and 3 × 3 box.", MusicSettings.HighlightEnabled, MusicSettings.SetHighlightEnabled);
         Row("Show remaining numbers", "Show boxes for each digit still to place.", MusicSettings.ShowRemaining, MusicSettings.SetShowRemaining);
+        // With the list's own 24 px gap, this sets the Back button three times further from the rows.
+        content.AddChild(new Control { CustomMinimumSize = new Vector2(0, 24) });
         var back = GD.Load<PackedScene>("res://UI/Paper/PaperButton.tscn").Instantiate<PaperButton>();
         back.Caption = "Back";
         back.Secondary = true;

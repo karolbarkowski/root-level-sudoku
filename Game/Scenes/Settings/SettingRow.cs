@@ -7,6 +7,8 @@ namespace SudokuEndless;
 public partial class SettingRow : VBoxContainer
 {
     private const int GrabberSize = 30;
+    private const int ToggleInset = 4;
+    private const int ChoiceGap = 2;
     private static ImageTexture _grabber;
 
     /// <summary>A white, anti-aliased disc for the slider handle; shared by every row.</summary>
@@ -59,33 +61,52 @@ public partial class SettingRow : VBoxContainer
         toggle.AddThemeStyleboxOverride("hover_pressed", Surface(PaperStyle.Surface.Lightened(.1f)));
         toggle.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
         line.AddChild(toggle);
+        // An orange thumb behind the captions slides to the chosen side.
+        var thumb = new Panel { MouseFilter = MouseFilterEnum.Ignore };
+        thumb.AddThemeStyleboxOverride("panel", Surface(PaperStyle.Burgundy));
+        toggle.AddChild(thumb);
         var choices = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
-        choices.AddThemeConstantOverride("separation", 2);
+        choices.AddThemeConstantOverride("separation", ChoiceGap);
         choices.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        choices.OffsetLeft = 4;
-        choices.OffsetRight = -4;
+        choices.OffsetLeft = ToggleInset;
+        choices.OffsetRight = -ToggleInset;
         toggle.AddChild(choices);
-        (PanelContainer Chip, Label Text) MakeChoice(string text)
+        Label MakeChoice(string text)
         {
-            var chip = new PanelContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill, MouseFilter = MouseFilterEnum.Ignore };
-            var caption = new Label { Text = text, HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center };
+            var caption = new Label { Text = text, SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
             caption.AddThemeFontSizeOverride("font_size", 14);
-            chip.AddChild(caption);
-            choices.AddChild(chip);
-            return (chip, caption);
+            choices.AddChild(caption);
+            return caption;
         }
-        var off = MakeChoice("OFF");
-        var on = MakeChoice("ON");
+        Label off = MakeChoice("OFF");
+        Label on = MakeChoice("ON");
+        float progress = enabled ? 1 : 0; // 0 = OFF, 1 = ON
+        Tween slide = null;
+        void Layout()
+        {
+            float chip = (toggle.Size.X - ToggleInset * 2 - ChoiceGap) / 2;
+            thumb.Position = new Vector2(ToggleInset + progress * (chip + ChoiceGap), 0);
+            thumb.Size = new Vector2(chip, toggle.Size.Y);
+            off.AddThemeColorOverride("font_color", PaperStyle.Ink.Lerp(PaperStyle.Muted, progress));
+            on.AddThemeColorOverride("font_color", PaperStyle.Muted.Lerp(PaperStyle.Ink, progress));
+        }
         void Paint(bool value)
         {
-            on.Chip.AddThemeStyleboxOverride("panel", Surface(value ? PaperStyle.Burgundy : Colors.Transparent));
-            off.Chip.AddThemeStyleboxOverride("panel", Surface(value ? Colors.Transparent : PaperStyle.Burgundy));
-            on.Text.AddThemeColorOverride("font_color", value ? PaperStyle.Ink : PaperStyle.Muted);
-            off.Text.AddThemeColorOverride("font_color", value ? PaperStyle.Muted : PaperStyle.Ink);
+            slide?.Kill();
+            float target = value ? 1 : 0;
+            if (!global::Sudoku.UiAnimationSettings.Default.Enabled || !toggle.IsInsideTree())
+            {
+                progress = target;
+                Layout();
+                return;
+            }
+            slide = toggle.CreateTween().SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
+            slide.TweenMethod(Callable.From<float>(v => { progress = v; Layout(); }), progress, target, .2);
         }
+        toggle.Resized += Layout;
         toggle.SetPressedNoSignal(enabled);
-        Paint(enabled);
+        Layout();
 
         HSlider slider = null;
         void Apply(bool value)
