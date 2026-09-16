@@ -1,10 +1,8 @@
 [gd_scene load_steps=5 format=3 uid="uid://csettings00001"]
-
-[ext_resource type="Script" path="res://Scenes/Settings/Settings.cs" id="1_set"]
-
-[ext_resource type="Theme" path="res://UI/Paper/PaperTheme.tres" id="2_theme"]
-[ext_resource type="PackedScene" path="res://UI/Paper/PaperBackground.tscn" id="3_bg"]
-[ext_resource type="PackedScene" path="res://UI/Paper/PaperButton.tscn" id="4_button"]
+[ext_resource type="Script" path="res://Scenes/Settings/Settings.cs" id="1"]
+[ext_resource type="Theme" path="res://UI/Paper/PaperTheme.tres" id="2"]
+[ext_resource type="PackedScene" path="res://UI/Paper/PaperBackground.tscn" id="3"]
+[ext_resource type="FontFile" path="res://Resources/fonts/Anton/Anton-Regular.ttf" id="4"]
 
 [node name="Settings" type="Control"]
 layout_mode = 3
@@ -13,109 +11,33 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme = ExtResource("2_theme")
-script = ExtResource("1_set")
+theme = ExtResource("2")
+script = ExtResource("1")
 
-[node name="Background" parent="." instance=ExtResource("3_bg")]
+[node name="Background" parent="." instance=ExtResource("3")]
 
-[node name="CenterContainer" type="MarginContainer" parent="."]
+[node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_top = 32
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_top = 40
 theme_override_constants/margin_bottom = 24
 
-[node name="Scroll" type="ScrollContainer" parent="CenterContainer"]
+[node name="Scroll" type="ScrollContainer" parent="Margin"]
 layout_mode = 2
 horizontal_scroll_mode = 0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/Scroll"]
+[node name="Content" type="VBoxContainer" parent="Margin/Scroll"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 16
+theme_override_constants/separation = 24
 
-[node name="Title" type="Label" parent="CenterContainer/Scroll/VBoxContainer"]
+[node name="Title" type="Label" parent="Margin/Scroll/Content"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
-horizontal_alignment = 1
+theme_override_fonts/font = ExtResource("4")
+theme_override_font_sizes/font_size = 42
 text = "Settings"
-
-[node name="AudioLabel" type="Label" parent="CenterContainer/Scroll/VBoxContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.643, 0.678, 0.694, 1)
-text = "AUDIO"
-
-[node name="MusicToggle" parent="CenterContainer/Scroll/VBoxContainer" instance=ExtResource("4_button")]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(220, 64)
-layout_mode = 2
-toggle_mode = true
-Caption = "Music: ON"
-Secondary = true
-Accent = true
-
-[node name="SoundToggle" parent="CenterContainer/Scroll/VBoxContainer" instance=ExtResource("4_button")]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(220, 64)
-layout_mode = 2
-toggle_mode = true
-Caption = "Sound: ON"
-Secondary = true
-Accent = true
-
-[node name="Divider" type="HSeparator" parent="CenterContainer/Scroll/VBoxContainer"]
-custom_minimum_size = Vector2(0, 24)
-layout_mode = 2
-
-[node name="BoardLabel" type="Label" parent="CenterContainer/Scroll/VBoxContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.643, 0.678, 0.694, 1)
-text = "BOARD"
-
-[node name="HighlightToggle" parent="CenterContainer/Scroll/VBoxContainer" instance=ExtResource("4_button")]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(220, 64)
-layout_mode = 2
-toggle_mode = true
-Caption = "Highlight: ON"
-Secondary = true
-Accent = true
-
-[node name="HighlightHint" type="Label" parent="CenterContainer/Scroll/VBoxContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.643, 0.678, 0.694, 1)
-text = "Highlight the selected cell's row, column and 3 × 3 box."
-autowrap_mode = 3
-
-[node name="RemainingToggle" parent="CenterContainer/Scroll/VBoxContainer" instance=ExtResource("4_button")]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(220, 64)
-layout_mode = 2
-toggle_mode = true
-Caption = "Show remaining numbers: ON"
-CaptionSize = 18
-Secondary = true
-Accent = true
-
-[node name="RemainingHint" type="Label" parent="CenterContainer/Scroll/VBoxContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.643, 0.678, 0.694, 1)
-text = "Show a stack of boxes for each digit still to place."
-autowrap_mode = 3
-
-[node name="BackButton" parent="CenterContainer/Scroll/VBoxContainer" instance=ExtResource("4_button")]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(220, 44)
-layout_mode = 2
-Caption = "Back"
-Secondary = true
-Accent = true

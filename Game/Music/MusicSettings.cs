@@ -11,6 +11,8 @@ public static class MusicSettings
     public static bool SoundEnabled { get; private set; } = true;
     public static bool HighlightEnabled { get; private set; } = true;
     public static bool ShowRemaining { get; private set; } = true;
+    public static int MusicVolume { get; private set; } = 10;
+    public static int SoundVolume { get; private set; } = 10;
 
     public static void Load()
     {
@@ -21,6 +23,8 @@ public static class MusicSettings
         SoundEnabled = Config.GetValue("audio", "sound_enabled", true).AsBool();
         HighlightEnabled = Config.GetValue("board", "highlight_enabled", true).AsBool();
         ShowRemaining = Config.GetValue("board", "show_remaining", true).AsBool();
+        MusicVolume = Mathf.Clamp(Config.GetValue("audio", "music_volume", 10).AsInt32(), 1, 10);
+        SoundVolume = Mathf.Clamp(Config.GetValue("audio", "sound_volume", 10).AsInt32(), 1, 10);
         Apply();
     }
 
@@ -60,6 +64,22 @@ public static class MusicSettings
         if (error != Error.Ok) GD.PushWarning($"Cannot save settings: {error}");
     }
 
+    public static void SetMusicVolume(int value)
+    {
+        MusicVolume = Mathf.Clamp(value, 1, 10);
+        Config.SetValue("audio", "music_volume", MusicVolume);
+        Apply();
+        Save();
+    }
+
+    public static void SetSoundVolume(int value)
+    {
+        SoundVolume = Mathf.Clamp(value, 1, 10);
+        Config.SetValue("audio", "sound_volume", SoundVolume);
+        Apply();
+        Save();
+    }
+
     private static void Apply()
     {
         int bus = AudioServer.GetBusIndex("Music");
@@ -67,5 +87,7 @@ public static class MusicSettings
         else GD.PushWarning("Music bus is missing; cannot apply music preference.");
         int sounds = AudioServer.GetBusIndex("GameSounds");
         if (sounds >= 0) AudioServer.SetBusMute(sounds, !SoundEnabled);
+        if (bus >= 0) AudioServer.SetBusVolumeDb(bus, Mathf.LinearToDb(MusicVolume / 10f));
+        if (sounds >= 0) AudioServer.SetBusVolumeDb(sounds, Mathf.LinearToDb(SoundVolume / 10f));
     }
 }

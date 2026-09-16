@@ -2,36 +2,41 @@ using Godot;
 
 namespace SudokuEndless;
 
-/// <summary>Audio preferences applied immediately and retained between launches.</summary>
 public partial class Settings : Control
 {
-	public override void _Ready()
-	{
-		Bind("MusicToggle", "Music", MusicSettings.Enabled, MusicSettings.SetEnabled);
-		Bind("SoundToggle", "Sound", MusicSettings.SoundEnabled, MusicSettings.SetSoundEnabled);
-		Bind("HighlightToggle", "Highlight", MusicSettings.HighlightEnabled, MusicSettings.SetHighlightEnabled);
-		Bind("RemainingToggle", "Show remaining numbers", MusicSettings.ShowRemaining, MusicSettings.SetShowRemaining);
-		Button back = GetNodeOrNull<Button>("%BackButton");
-		if (back != null)
-		{
-			back.Pressed += OnBack;
-		}
-	}
-
-	private void Bind(string name, string caption, bool initial, System.Action<bool> apply)
-	{
-		var button = GetNode<PaperButton>("%" + name);
-		void Refresh(bool enabled)
-		{
-			button.Caption = $"{caption}: {(enabled ? "ON" : "OFF")}";
-			button.Accent = enabled;
-			button.AccessibilityName = button.Caption;
-			button.QueueRedraw();
-		}
-		button.SetPressedNoSignal(initial);
-		Refresh(initial);
-		button.Toggled += enabled => { apply(enabled); Refresh(enabled); };
-	}
-
-	private void OnBack() => SceneTransition.GoTo(SceneTransition.StartScreenPath);
+    public override void _Ready()
+    {
+        var content = GetNode<VBoxContainer>("%Content");
+        void Heading(string text)
+        {
+            var label = new Label { Text = text };
+            label.AddThemeFontSizeOverride("font_size", 16);
+            label.AddThemeColorOverride("font_color", PaperStyle.Muted);
+            content.AddChild(label);
+        }
+        void Row(string title, string description, bool enabled, System.Action<bool> toggle,
+            int volume = 0, System.Action<int> changeVolume = null)
+        {
+            var row = new SettingRow();
+            content.AddChild(row);
+            row.Configure(title, description, enabled, toggle, volume, changeVolume);
+        }
+        Heading("AUDIO");
+        Row("Music", "Background soundtrack.", MusicSettings.Enabled, MusicSettings.SetEnabled,
+            MusicSettings.MusicVolume, MusicSettings.SetMusicVolume);
+        Row("Sound", "Buttons and game events.", MusicSettings.SoundEnabled, MusicSettings.SetSoundEnabled,
+            MusicSettings.SoundVolume, MusicSettings.SetSoundVolume);
+        content.AddChild(new Control { CustomMinimumSize = new Vector2(0, 12) });
+        Heading("BOARD");
+        Row("Highlight", "Shade the selected row, column and 3 × 3 box.", MusicSettings.HighlightEnabled, MusicSettings.SetHighlightEnabled);
+        Row("Show remaining numbers", "Show boxes for each digit still to place.", MusicSettings.ShowRemaining, MusicSettings.SetShowRemaining);
+        var back = GD.Load<PackedScene>("res://UI/Paper/PaperButton.tscn").Instantiate<PaperButton>();
+        back.Caption = "Back";
+        back.Secondary = true;
+        back.LeadingIcon = GD.Load<Texture2D>("res://Resources/icons/arrow-left.svg");
+        back.CustomMinimumSize = new Vector2(PaperStyle.Body.GetStringSize("Back", fontSize: back.CaptionSize).X + 80, 52);
+        back.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+        back.Pressed += () => SceneTransition.GoTo(SceneTransition.StartScreenPath);
+        content.AddChild(back);
+    }
 }
