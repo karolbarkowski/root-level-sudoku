@@ -138,6 +138,7 @@ public partial class MusicDirector : Node
 
     public override void _Ready()
     {
+        MusicSettings.Load();
         ProcessMode = ProcessModeEnum.Always;
         _leftPlayer = AddNotePlayer(NotesLeftBus);
         _centrePlayer = AddNotePlayer(NotesBus);

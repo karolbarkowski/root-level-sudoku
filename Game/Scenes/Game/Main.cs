@@ -98,7 +98,19 @@ public partial class Main : Control, ITransitionScreen
 
     private void Layout()
     {
-        var background = GetNode<Control>("PaperBackground");
+        // Tool scripts can be recreated on assembly reload without another _Ready call.
+        // Rebind layout nodes, and tolerate partially assembled scenes in the editor.
+        if (!IsInstanceValid(_sheet)) _sheet = GetNodeOrNull<Control>("%Sheet");
+        var background = GetNodeOrNull<Control>("PaperBackground");
+        if (!IsInstanceValid(_sheet) || background == null || Size.X <= 0 || Size.Y <= 0) return;
+        for (int i = 0; i < SectionNames.Length; i++)
+        {
+            if (!IsInstanceValid(_sections[i]))
+                _sections[i] = _sheet.GetNodeOrNull<Control>(SectionNames[i]);
+            if (!IsInstanceValid(_sections[i])) return;
+        }
+        if (!IsInstanceValid(_restartConfirm)) _restartConfirm = GetNodeOrNull<PaperConfirm>("%RestartConfirm");
+        if (!IsInstanceValid(_solvedPanel)) _solvedPanel = GetNodeOrNull<SolvedPanel>("%SolvedPanel");
         background.SetAnchorsPreset(LayoutPreset.TopLeft);
         background.Position = Vector2.Zero;
         background.Size = Size;
@@ -141,7 +153,7 @@ public partial class Main : Control, ITransitionScreen
     // Reapply the layout there so the preview cannot retain the old bottom margin.
     public override void _Process(double delta)
     {
-        if (Engine.IsEditorHint() && IsNodeReady() && IsInstanceValid(_sheet) && Size.X > 0 && Size.Y > 0)
+        if (Engine.IsEditorHint() && IsNodeReady() && Size.X > 0 && Size.Y > 0)
             Layout();
     }
 
