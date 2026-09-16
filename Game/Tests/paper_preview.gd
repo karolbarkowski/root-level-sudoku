@@ -33,7 +33,7 @@ func run():
         var menu_rect = screen.get_node("Menu").get_global_rect()
         check(hero_rect.end.y < menu_rect.position.y, "Hero must stay above menu at " + labels[i])
         check(abs(hero_rect.size.x - menu_rect.size.x) < 1, "Title and menu must scale together")
-        check(screen.get_node("PaperBackground") is ColorRect, "Background must be a flat dark surface")
+        check(screen.get_node("PaperBackground") is ColorRect and screen.get_node("PaperBackground").material != null, "Background must be the shaded gradient surface")
         check(rows.get_child_count() == 4, "All four difficulties must exist")
         for row in rows.get_children():
             check(row.get_global_rect().end.x <= screen.size.x + 1, "Button exceeds width at " + labels[i])
