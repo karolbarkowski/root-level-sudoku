@@ -49,7 +49,7 @@ public partial class GameSounds : Node
             // Settings toggles get their own cue instead of two overlapping sounds.
             bool setting = false;
             for (Node parent = button.GetParent(); parent != null; parent = parent.GetParent())
-                if (parent is Settings) { setting = true; break; }
+                if (parent is SettingsView) { setting = true; break; }
             if (setting && button.ToggleMode) _toggle.Play();
             else _click.Play();
         };

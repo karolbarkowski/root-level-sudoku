@@ -43,10 +43,11 @@ public partial class SettingRow : VBoxContainer
         AddChild(line);
         var copy = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         line.AddChild(copy);
-        var label = new Label { Text = title, AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        // No wrapping: the copy fits the design column, and a fixed height lets hidden screens lay out.
+        var label = new Label { Text = title };
         label.AddThemeFontSizeOverride("font_size", 21);
         copy.AddChild(label);
-        var detail = new Label { Text = description, AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        var detail = new Label { Text = description };
         detail.AddThemeFontSizeOverride("font_size", 15);
         detail.AddThemeColorOverride("font_color", PaperStyle.Muted);
         copy.AddChild(detail);

@@ -10,8 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://dack4ygb3pp1p" path="res://Resources/icons/undo.svg" id="8"]
 [ext_resource type="Texture2D" uid="uid://d0av3a4pkj0sh" path="res://Resources/icons/redo.svg" id="9"]
 [ext_resource type="Texture2D" uid="uid://dveaaam76x6l4" path="res://Resources/icons/edit.svg" id="10"]
-[ext_resource type="Script" uid="uid://dqi3k42euv2qj" path="res://UI/Paper/PaperConfirm.cs" id="11"]
-[ext_resource type="Texture2D" uid="uid://c1hamsgg7p2xt" path="res://Resources/icons/restart.svg" id="12"]
+[ext_resource type="Texture2D" uid="uid://bjbt12ly1cpci" path="res://Resources/icons/settings.svg" id="12"]
 [ext_resource type="Texture2D" uid="uid://d2d8n7tvfwyaj" path="res://Resources/icons/arrow-left.svg" id="13"]
 [ext_resource type="Script" uid="uid://bxamcosblbqhi" path="res://Scenes/Game/SolvedPanel.cs" id="14"]
 
@@ -135,24 +134,23 @@ theme_override_font_sizes/font_size = 20
 text = "EASY"
 horizontal_alignment = 1
 
-[node name="RestartButton" parent="Sheet/Navigation" unique_id=1584916215 instance=ExtResource("5")]
+[node name="SettingsButton" parent="Sheet/Navigation" unique_id=1584916215 instance=ExtResource("5")]
 unique_name_in_owner = true
 material = SubResource("ShaderMaterial_eu08i")
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
-tooltip_text = "Start over"
+tooltip_text = "Settings"
 mouse_default_cursor_shape = 2
-accessibility_name = "Start over"
+accessibility_name = "Settings"
 theme_override_styles/normal = SubResource("StyleBoxEmpty_smjng")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_hu0go")
 theme_override_styles/hover = SubResource("StyleBoxEmpty_poxgx")
 theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_cubcr")
 theme_override_styles/disabled = SubResource("StyleBoxEmpty_82o10")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_77qeb")
-disabled = true
 SvgIcon = ExtResource("12")
 TintIcon = true
-Caption = "Start over"
+Caption = "Settings"
 
 [node name="BoardArea" type="Control" parent="Sheet" unique_id=1832515540 groups=["silent_button_sounds"]]
 custom_minimum_size = Vector2(476, 476)
@@ -249,14 +247,3 @@ anchors_preset = 0
 offset_right = 540.0
 offset_bottom = 1220.0
 script = ExtResource("14")
-
-[node name="RestartConfirm" type="Control" parent="." unique_id=2040909329]
-unique_name_in_owner = true
-anchors_preset = 0
-offset_right = 540.0
-offset_bottom = 1220.0
-script = ExtResource("11")
-Title = "Start over?"
-Body = "Your numbers and notes on this puzzle will be cleared. The clues stay."
-ConfirmCaption = "Start over"
-CancelCaption = "Keep playing"

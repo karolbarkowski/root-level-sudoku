@@ -158,18 +158,33 @@ func run():
         root.push_input(tap, true)
         await process_frame
     check(board.SelectedIndex == -1, "Tapping empty space clears the selection")
-    check(board.HasProgress, "Played puzzle has progress to clear")
-    check(not current_scene.get_node("%RestartButton").disabled, "Start over is available once there is progress")
-    current_scene.get_node("%RestartButton").emit_signal("pressed")
-    await create_timer(.3).timeout
-    check(current_scene.get_node("%RestartConfirm").IsOpen, "Start over asks for confirmation")
-    current_scene.get_node("%RestartConfirm").Close(true)
-    await create_timer(.3).timeout
-    check(not board.HasProgress and not board.CanUndo and not board.CanRedo, "Start over clears numbers, notes and history")
-    for tile in tiles(board):
-        if not tile.Data.IsGiven:
-            check(tile.Data.Value == 0 and Array(tile.Data.Hints).is_empty(), "Start over empties every non-clue cell")
-    check(current_scene.get_node("%RestartButton").disabled, "Start over is unavailable with nothing to clear")
+    check(not current_scene.has_node("%RestartButton"), "Start over is removed")
+    var sheet = current_scene.get_node("SettingsSheet")
+    check(not sheet.IsOpen and not sheet.visible, "Settings sheet starts closed")
+    var moves = board.GetValueCounts()
+    current_scene.get_node("%SettingsButton").emit_signal("pressed")
+    await create_timer(.5).timeout
+    check(sheet.IsOpen and sheet.visible, "Settings button opens the sheet")
+    check(sheet.find_children("*", "HSlider", true, false).size() == 2, "Sheet shows both volume sliders")
+    var sheet_rect = sheet.get_node("Content").get_global_rect()
+    check(sheet_rect.end.y <= current_scene.size.y + 1, "Sheet content fits on screen")
+    await capture("settings-sheet")
+    current_scene.get_node("%NumberBar/Digit5").emit_signal("NumberPressed", 5)
+    check(current_scene.get_node("%NumberBar/Digit5").is_visible_in_tree(), "Keys stay in place under the sheet")
+    var key = InputEventKey.new()
+    key.keycode = KEY_6
+    key.pressed = true
+    current_scene._UnhandledKeyInput(key)
+    check(board.GetValueCounts() == moves, "Digit keys do nothing while the sheet is open")
+    current_scene.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+    await create_timer(.4).timeout
+    check(not sheet.IsOpen and not sheet.visible, "Android back closes the sheet first")
+    check(current_scene.scene_file_path.ends_with("Main.tscn") and not transition().Busy, "Closing the sheet stays in the game")
+    current_scene.get_node("%SettingsButton").emit_signal("pressed")
+    await create_timer(.5).timeout
+    sheet.find_child("Done", true, false).emit_signal("pressed")
+    await create_timer(.4).timeout
+    check(not sheet.visible, "Done closes the sheet")
     current_scene.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
     await settle()
     check(current_scene.scene_file_path.ends_with("StartScreen.tscn"), "Android back returns to menu")

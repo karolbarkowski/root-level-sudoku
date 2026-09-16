@@ -129,33 +129,4 @@ public class BoardHistoryTests
         cells[3] = 10;
         Should.Throw<ArgumentException>(() => Board.Restore(cells, [], []));
     }
-
-    [Fact]
-    public void Restart_ClearsPlayerCells_KeepsClues_AndForgetsHistory()
-    {
-        var clues = new int[9, 9];
-        clues[0, 0] = 4;
-        Board board = new(clues);
-        board.PlaceMove(0, 1, 5);
-        board.PlaceMove(2, 2, 7);
-        board.Undo();
-
-        bool[] isGiven = new bool[81];
-        isGiven[0] = true;
-        board.Restart(isGiven);
-
-        board[0, 0].ShouldBe(4);
-        board[0, 1].ShouldBe(0);
-        board[2, 2].ShouldBe(0);
-        board.CanUndo.ShouldBe(false);
-        board.CanRedo.ShouldBe(false);
-    }
-
-    [Fact]
-    public void Restart_WithWrongMaskLength_Throws()
-    {
-        Board board = EmptyBoard();
-
-        Should.Throw<ArgumentException>(() => board.Restart(new bool[80]));
-    }
 }

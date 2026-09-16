@@ -2,44 +2,44 @@ using Godot;
 
 namespace SudokuEndless;
 
-public partial class Settings : Control
+/// <summary>
+/// The list of settings, without a title or a way out: the start screen shows it in place of its
+/// menu, and the game shows it in a sheet. Every change is saved at once.
+/// </summary>
+public partial class SettingsView : VBoxContainer
 {
+    /// <summary>Emitted after any setting changes, so a screen can redraw what depends on it.</summary>
+    [Signal] public delegate void ChangedEventHandler();
+
+    /// <summary>Gap between rows. Set before the view enters the tree.</summary>
+    public int Separation { get; set; } = 24;
+
     public override void _Ready()
     {
-        var content = GetNode<VBoxContainer>("%Content");
+        AddThemeConstantOverride("separation", Separation);
         void Heading(string text)
         {
             var label = new Label { Text = text };
             label.AddThemeFontSizeOverride("font_size", 16);
             label.AddThemeColorOverride("font_color", PaperStyle.Muted);
-            content.AddChild(label);
+            AddChild(label);
         }
         void Row(string title, string description, bool enabled, System.Action<bool> toggle,
             int volume = 0, System.Action<int> changeVolume = null)
         {
             var row = new SettingRow();
-            content.AddChild(row);
-            row.Configure(title, description, enabled, toggle, volume, changeVolume);
+            AddChild(row);
+            row.Configure(title, description, enabled, value => { toggle(value); EmitSignal(SignalName.Changed); },
+                volume, changeVolume == null ? null : value => { changeVolume(value); EmitSignal(SignalName.Changed); });
         }
         Heading("AUDIO");
         Row("Music", "Background soundtrack.", MusicSettings.Enabled, MusicSettings.SetEnabled,
             MusicSettings.MusicVolume, MusicSettings.SetMusicVolume);
         Row("Sound", "Buttons and game events.", MusicSettings.SoundEnabled, MusicSettings.SetSoundEnabled,
             MusicSettings.SoundVolume, MusicSettings.SetSoundVolume);
-        content.AddChild(new Control { CustomMinimumSize = new Vector2(0, 12) });
+        AddChild(new Control { CustomMinimumSize = new Vector2(0, 12), MouseFilter = MouseFilterEnum.Ignore });
         Heading("BOARD");
         Row("Highlight", "Shade the selected row, column and 3 × 3 box.", MusicSettings.HighlightEnabled, MusicSettings.SetHighlightEnabled);
         Row("Show remaining numbers", "Show boxes for each digit still to place.", MusicSettings.ShowRemaining, MusicSettings.SetShowRemaining);
-        // With the list's own 24 px gap, this sets the Back button three times further from the rows.
-        content.AddChild(new Control { CustomMinimumSize = new Vector2(0, 24) });
-        var back = GD.Load<PackedScene>("res://UI/Paper/PaperButton.tscn").Instantiate<PaperButton>();
-        back.Caption = "Back";
-        back.Secondary = true;
-        back.LeadingIcon = GD.Load<Texture2D>("res://Resources/icons/arrow-left.svg");
-        back.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
-        back.Pressed += () => SceneTransition.GoTo(SceneTransition.StartScreenPath);
-        content.AddChild(back);
-        // After AddChild: PaperButton._Ready resets the minimum size. Caption plus icon plus side padding.
-        back.CustomMinimumSize = new Vector2(PaperStyle.Body.GetStringSize("Back", fontSize: back.CaptionSize).X + 140, 56);
     }
 }

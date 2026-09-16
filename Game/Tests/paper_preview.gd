@@ -34,7 +34,7 @@ func run():
         check(hero_rect.end.y < menu_rect.position.y, "Hero must stay above menu at " + labels[i])
         check(abs(hero_rect.size.x - menu_rect.size.x) < 1, "Title and menu must scale together")
         check(screen.get_node("PaperBackground") is ColorRect, "Background must be a flat dark surface")
-        check(rows.get_child_count() == 5, "All five difficulties must exist")
+        check(rows.get_child_count() == 4, "All four difficulties must exist")
         for row in rows.get_children():
             check(row.get_global_rect().end.x <= screen.size.x + 1, "Button exceeds width at " + labels[i])
             check(row.get_global_rect().end.y <= screen.size.y + 1, "Button exceeds height at " + labels[i])
@@ -55,12 +55,18 @@ func run():
     up.action = "ui_accept"
     up.pressed = false
     Input.parse_input_event(up)
-    await create_timer(.05).timeout
-    await settle()
-    check(current_scene.scene_file_path.ends_with("Settings.tscn"), "Keyboard activation must navigate to Settings")
-    current_scene.get_node("%BackButton").emit_signal("pressed")
-    await settle()
-    check(current_scene.scene_file_path.ends_with("StartScreen.tscn"), "Settings Back must restore start screen")
+    await create_timer(.6).timeout
+    check(current_scene == screen and screen.ShowingSettings, "Keyboard activation must show Settings on the start screen")
+    check(screen.get_node("SettingsMenu").visible and not screen.get_node("Menu").visible, "Settings replace the menu")
+    check(screen.get_node("Hero").modulate.a > .99, "The title stays while Settings are shown")
+    check(screen.get_node("SettingsMenu/Back").has_focus(), "Keyboard focus follows to Back")
+    check(screen.get_node("SettingsMenu").get_global_rect().end.y <= screen.size.y + 1, "Settings fit on screen")
+    await RenderingServer.frame_post_draw
+    check(root.get_texture().get_image().save_png(output_dir.path_join("settings.png")) == OK, "Screenshot must save")
+    screen.get_node("SettingsMenu/Back").emit_signal("pressed")
+    await create_timer(.6).timeout
+    check(not screen.ShowingSettings and screen.get_node("Menu").visible and not screen.get_node("SettingsMenu").visible, "Settings Back must restore the menu")
+    check(screen.get_node("Menu/Footer/Settings").has_focus(), "Keyboard focus returns to Settings")
     var easy = current_scene.get_node("Menu/Difficulties/Easy")
     var point = easy.get_global_rect().get_center()
     var move = InputEventMouseMotion.new()

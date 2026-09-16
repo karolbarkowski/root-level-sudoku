@@ -47,6 +47,12 @@ public partial class TransitionOverlay : Control
     public override void _Ready()
     {
         _spinner = GetNode<ColorRect>("Spinner");
+        // The same gradient the screens use, so the cover matches what it hides. Drawn behind this
+        // control's own title and detail text.
+        var background = GD.Load<PackedScene>("res://UI/Paper/PaperBackground.tscn").Instantiate<Control>();
+        background.ShowBehindParent = true;
+        AddChild(background);
+        MoveChild(background, 0);
         MouseFilter = MouseFilterEnum.Stop;
         ApplyContent();
     }
@@ -166,7 +172,6 @@ public partial class TransitionOverlay : Control
 
     public override void _Draw()
     {
-        DrawRect(new Rect2(Vector2.Zero, Size), PaperStyle.Paper);
         if (_contentAlpha <= 0) return;
         Vector2 center = new(Size.X / 2, Size.Y / 2 - 22 + _contentShift);
         float width = PaperStyle.Body.GetStringSize(_title, fontSize: 18).X;

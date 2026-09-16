@@ -1,5 +1,12 @@
 [gd_scene format=3]
+
+[ext_resource type="Shader" path="res://UI/Paper/PaperBackground.gdshader" id="1"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_gradient"]
+shader = ExtResource("1")
+
 [node name="PaperBackground" type="ColorRect"]
+material = SubResource("ShaderMaterial_gradient")
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0

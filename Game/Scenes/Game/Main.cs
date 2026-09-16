@@ -15,8 +15,8 @@ public partial class Main : Control, ITransitionScreen
     private PaperIconButton _notes;
     private PaperIconButton _undo;
     private PaperIconButton _redo;
-    private PaperIconButton _restart;
-    private PaperConfirm _restartConfirm;
+    private PaperIconButton _settingsButton;
+    private SettingsSheet _settingsSheet;
     private SolvedPanel _solvedPanel;
     private bool _solved;
     private Tween _entry;
@@ -54,11 +54,16 @@ public partial class Main : Control, ITransitionScreen
         _notes = GetNode<PaperIconButton>("%ModeToggle");
         _undo = GetNode<PaperIconButton>("%UndoButton");
         _redo = GetNode<PaperIconButton>("%RedoButton");
-        _restart = GetNode<PaperIconButton>("%RestartButton");
-        _restartConfirm = GetNode<PaperConfirm>("%RestartConfirm");
-        _restart.Pressed += () => { if (!_leaving) _restartConfirm.Open(); };
-        _restartConfirm.Confirmed += () => _board.Restart();
+        _settingsButton = GetNode<PaperIconButton>("%SettingsButton");
         _solvedPanel = GetNode<SolvedPanel>("%SolvedPanel");
+        if (!Engine.IsEditorHint())
+        {
+            // Added last, so it opens over everything, the solved panel included.
+            _settingsSheet = new SettingsSheet { Name = "SettingsSheet" };
+            AddChild(_settingsSheet);
+            _settingsSheet.Changed += OnSettingsChanged;
+            _settingsButton.Pressed += () => { if (!_leaving) _settingsSheet.Open(); };
+        }
         _solvedPanel.MenuRequested += BackToMenu;
         _solvedPanel.NewPuzzleRequested += () =>
         {
@@ -109,12 +114,11 @@ public partial class Main : Control, ITransitionScreen
                 _sections[i] = _sheet.GetNodeOrNull<Control>(SectionNames[i]);
             if (!IsInstanceValid(_sections[i])) return;
         }
-        if (!IsInstanceValid(_restartConfirm)) _restartConfirm = GetNodeOrNull<PaperConfirm>("%RestartConfirm");
         if (!IsInstanceValid(_solvedPanel)) _solvedPanel = GetNodeOrNull<SolvedPanel>("%SolvedPanel");
         background.SetAnchorsPreset(LayoutPreset.TopLeft);
         background.Position = Vector2.Zero;
         background.Size = Size;
-        foreach (Control overlay in new Control[] { _restartConfirm, _solvedPanel })
+        foreach (Control overlay in new Control[] { _solvedPanel, _settingsSheet })
         {
             if (overlay == null) continue;
             overlay.Position = Vector2.Zero;
@@ -200,10 +204,8 @@ public partial class Main : Control, ITransitionScreen
         int[] counts = _board.GetValueCounts();
         _undo.Disabled = !_board.CanUndo;
         _redo.Disabled = !_board.CanRedo;
-        _restart.Disabled = !_board.HasProgress;
         _undo.RefreshFeedback();
         _redo.RefreshFeedback();
-        _restart.RefreshFeedback();
         // Keep keys available: nine occurrences do not guarantee nine correct placements.
         foreach (var key in _keys)
         {
@@ -220,12 +222,19 @@ public partial class Main : Control, ITransitionScreen
     public void BackToMenu()
     {
         if (_leaving || Engine.IsEditorHint()) return;
-        if (_restartConfirm.IsOpen)
+        if (_settingsSheet?.IsOpen == true)
         {
-            _restartConfirm.Close(false);
+            _settingsSheet.Close();
             return;
         }
         _leaving = SceneTransition.GoTo(SceneTransition.StartScreenPath);
+    }
+
+    /// <summary>Highlight and remaining-number boxes read their setting when drawn; redraw them.</summary>
+    private void OnSettingsChanged()
+    {
+        _board.RefreshHighlights();
+        foreach (var key in _keys) key?.QueueRedraw();
     }
 
     private void OnSolved()
@@ -247,7 +256,7 @@ public partial class Main : Control, ITransitionScreen
     public override void _UnhandledKeyInput(InputEvent @event)
     {
         if (@event is not InputEventKey key || !key.Pressed || key.Echo) return;
-        if ((_restartConfirm.IsOpen || _solved) && key.Keycode != Key.Escape) return;
+        if ((_settingsSheet?.IsOpen == true || _solved) && key.Keycode != Key.Escape) return;
         if (key.Keycode == Key.Escape) BackToMenu();
         else if (key.Keycode >= Key.Key1 && key.Keycode <= Key.Key9) EnterNumber((int)key.Keycode - (int)Key.Key0);
         else if (key.Keycode == Key.Backspace || key.Keycode == Key.Delete) _board.EraseSelected();

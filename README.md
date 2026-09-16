@@ -11,8 +11,9 @@ Generators.Tests.Unit/    Unit tests for the board, history, hints and validatio
 Generators.Benchmarks/    BenchmarkDotNet benchmarks for generation speed
 Generators.Console/       Console app that generates a puzzle and steps through its solution
 Game/                     Godot project (references Generators via ProjectReference)
-  Scenes/StartScreen/     Main scene: difficulty choice, continue / new game
-  Scenes/Game/            Gameplay: Board, Tile, NumberButton, SolvedPanel, Main
+  Scenes/StartScreen/     Main scene: difficulty choice, continue / new game; settings swap in under the title
+  Scenes/Game/            Gameplay: Board, Tile, NumberButton, SolvedPanel, SettingsSheet, Main
+  Scenes/Settings/        SettingsView and SettingRow, shared by the start screen and the in-game sheet
   UI/Paper/               Shared UI kit (buttons, menus, dialogs, theme, palette)
   UI/Transition/          SceneTransition autoload: animated scene changes, runs generation
   UtilsScripts/           GameSession: live puzzle, undo history, notes, save/load

@@ -24,6 +24,14 @@ public partial class StartScreen : Control, ITransitionScreen
 	/// <summary>Whole exit cascade. The transition cover starts fading in partway through.</summary>
 	[Export] public float ExitDuration { get; set; } = .25f;
 
+	[ExportGroup("Settings")]
+
+	/// <summary>Menu rows (or settings rows) leaving when the two swap.</summary>
+	[Export] public float SwapOutDuration { get; set; } = .16f;
+
+	/// <summary>The other set of rows arriving once the first has gone.</summary>
+	[Export] public float SwapInDuration { get; set; } = .3f;
+
 	/// <summary>Share of <see cref="MenuDuration"/> one row spends moving; the rest is stagger.</summary>
 	private const float MenuRowShare = .6f;
 
@@ -46,6 +54,17 @@ public partial class StartScreen : Control, ITransitionScreen
 	private Tween _entry;
 	private PaperButton _resume;
 	private PaperButton _chosen;
+	private PaperButton _settingsButton;
+	private PaperButton _back;
+	private VBoxContainer _settingsMenu;
+	private SettingsView _settingsView;
+	private bool _hasResume;
+	private bool _showingSettings;
+	private bool _swapping;
+	private bool _previousQuitOnGoBack;
+
+	/// <summary>True while the settings replace the menu (or are on their way in).</summary>
+	public bool ShowingSettings => _showingSettings;
 	public override void _Ready()
 	{
 		// The game is portrait-only. Keep one logical poster for desktop and Android.
@@ -56,7 +75,8 @@ public partial class StartScreen : Control, ITransitionScreen
 		_hero = GetNode<Control>("Hero");
 		_menu = GetNode<VBoxContainer>("Menu");
 		_resume = GetNode<PaperButton>("Resume");
-		_resume.Visible = GameSession.HasPuzzle;
+		_hasResume = GameSession.HasPuzzle;
+		_resume.Visible = _hasResume;
 		_resume.Pressed += () => Navigate(_resume, SceneTransition.GamePath, resume: true);
 		_menu.GetNode<Label>("Heading/Caption").Text = GameSession.HasPuzzle ? "START A NEW PUZZLE" : "CHOOSE YOUR DIFFICULTY";
 		var rows = _menu.GetNode<VBoxContainer>("Difficulties");
@@ -71,8 +91,10 @@ public partial class StartScreen : Control, ITransitionScreen
 			button.Pressed += () => Navigate(button, SceneTransition.GamePath, difficulty);
 			rows.AddChild(button);
 		}
-		var settings = _menu.GetNode<PaperButton>("Footer/Settings");
-		settings.Pressed += () => Navigate(settings, SceneTransition.SettingsPath);
+		_settingsButton = _menu.GetNode<PaperButton>("Footer/Settings");
+		_settingsButton.Pressed += ShowSettings;
+		BuildSettings(scene);
+		_previousQuitOnGoBack = GetTree().QuitOnGoBack;
 		var quit = _menu.GetNode<PaperButton>("Footer/Quit");
 		quit.Pressed += () => Navigate(quit, null);
 		_menu.GetNode<PaperButton>("Support").Pressed += () => OS.ShellOpen(SupportUrl);
@@ -82,19 +104,50 @@ public partial class StartScreen : Control, ITransitionScreen
 		// Keep every button neutral until the player uses the pointer or keyboard.
 	}
 
+	/// <summary>
+	/// The settings section: same heading style as the menu, the settings rows, and Back. It shares
+	/// the menu's column and scale, so the title does not move when the two swap.
+	/// </summary>
+	private void BuildSettings(PackedScene buttonScene)
+	{
+		_settingsMenu = new VBoxContainer { Name = "SettingsMenu", Visible = false };
+		_settingsMenu.AddThemeConstantOverride("separation", 12);
+		AddChild(_settingsMenu);
+		var heading = (Control)_menu.GetNode("Heading").Duplicate();
+		heading.GetNode<Label>("Caption").Text = "SETTINGS";
+		_settingsMenu.AddChild(heading);
+		_settingsView = new SettingsView { Name = "View", Separation = 20 };
+		_settingsMenu.AddChild(_settingsView);
+		_settingsMenu.AddChild(new Control { Name = "Space", CustomMinimumSize = new Vector2(0, 28), MouseFilter = MouseFilterEnum.Ignore });
+		_back = buttonScene.Instantiate<PaperButton>();
+		_back.Name = "Back";
+		_back.Caption = "Back";
+		_back.Secondary = true;
+		_back.LeadingIcon = GD.Load<Texture2D>("res://Resources/icons/arrow-left.svg");
+		_back.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+		_back.Pressed += ShowMenu;
+		_settingsMenu.AddChild(_back);
+		// After AddChild: PaperButton._Ready resets the minimum size. Caption plus icon plus side padding.
+		_back.CustomMinimumSize = new Vector2(PaperStyle.Body.GetStringSize("Back", fontSize: _back.CaptionSize).X + 140, 66);
+	}
+
 	private void Layout()
 	{
 		// Scale one complete vertical poster. Never shrink the title independently
 		// of the controls. The title sits at the top; the actions (continue and the menu) form one
 		// section held to the bottom edge, and any spare height opens up between the two.
-		float resumeHeight = _resume.Visible ? ResumeHeight + ResumeGap : 0;
+		// Sized for the taller of the menu and the settings, so swapping them never rescales the title.
+		// Both sections hold to the bottom edge on their own.
+		const float column = PosterWidth - (SidePadding * 2);
+		float resumeHeight = _hasResume ? ResumeHeight + ResumeGap : 0;
 		float menuHeight = _menu.GetCombinedMinimumSize().Y;
-		float sectionHeight = resumeHeight + menuHeight;
+		float menuSection = resumeHeight + menuHeight;
+		float settingsHeight = _settingsMenu.GetCombinedMinimumSize().Y;
+		float sectionHeight = Mathf.Max(menuSection, settingsHeight);
 		float height = (EdgePadding * 2) + HeroHeight + HeroGap + sectionHeight;
 		float scale = Mathf.Min(Size.X / PosterWidth, Size.Y / height);
 		Vector2 origin = new Vector2((Size.X - PosterWidth * scale) / 2, 0);
-		Vector2 section = new Vector2(origin.X, Size.Y - (EdgePadding + sectionHeight) * scale);
-		const float column = PosterWidth - (SidePadding * 2);
+		Vector2 section = new Vector2(origin.X, Size.Y - (EdgePadding + menuSection) * scale);
 		// Sized here rather than by its own full-rect anchors: on Android those never resolve
 		// against this root and the sheet collapses to 0x0, leaving the bare clear colour.
 		_background.Position = Vector2.Zero;
@@ -108,6 +161,9 @@ public partial class StartScreen : Control, ITransitionScreen
 		_menu.Position = section + new Vector2(SidePadding, resumeHeight) * scale;
 		_menu.Size = new Vector2(column, menuHeight);
 		_menu.Scale = Vector2.One * scale;
+		_settingsMenu.Position = new Vector2(origin.X + SidePadding * scale, Size.Y - (EdgePadding + settingsHeight) * scale);
+		_settingsMenu.Size = new Vector2(column, settingsHeight);
+		_settingsMenu.Scale = Vector2.One * scale;
 	}
 	/// <summary>One slot per menu row. The spacer has nothing to show, so it does not take a slot.</summary>
 	private List<Control> Rows()
@@ -118,6 +174,19 @@ public partial class StartScreen : Control, ITransitionScreen
 		{
 			if (child.Name == "Difficulties")
 				foreach (Control row in child.GetChildren()) rows.Add(row);
+			else if (child is Control control && control.Name != "Space") rows.Add(control);
+		}
+		return rows;
+	}
+
+	/// <summary>The settings section's rows, in the same shape as <see cref="Rows"/>.</summary>
+	private List<Control> SettingsRows()
+	{
+		var rows = new List<Control>();
+		foreach (Node child in _settingsMenu.GetChildren())
+		{
+			if (child == _settingsView)
+				foreach (Control row in _settingsView.GetChildren()) rows.Add(row);
 			else if (child is Control control && control.Name != "Space") rows.Add(control);
 		}
 		return rows;
@@ -147,11 +216,16 @@ public partial class StartScreen : Control, ITransitionScreen
 	public void PlayEntry()
 	{
 		if (!UiAnimationSettings.Default.Enabled || _leaving) return;
-		List<Control> rows = Rows();
+		CascadeIn(Rows(), MenuDuration);
+		((PaperHero)_hero).PlayTitle(TitleDelay, TitleDuration);
+	}
 
-		// Rows overlap: one row's travel plus the whole stagger has to fit inside MenuDuration.
-		double rowDuration = MenuDuration * MenuRowShare;
-		double step = rows.Count > 1 ? (MenuDuration - rowDuration) / (rows.Count - 1) : 0;
+	/// <summary>Rows rise into place one after another, top first, all within <paramref name="duration"/>.</summary>
+	private void CascadeIn(List<Control> rows, double duration)
+	{
+		// Rows overlap: one row's travel plus the whole stagger has to fit inside the duration.
+		double rowDuration = duration * MenuRowShare;
+		double step = rows.Count > 1 ? (duration - rowDuration) / (rows.Count - 1) : 0;
 
 		_entry?.Kill();
 		_entry = CreateTween().SetParallel();
@@ -160,13 +234,84 @@ public partial class StartScreen : Control, ITransitionScreen
 			Control row = rows[i];
 			double delay = i * step;
 			// Only PaperButtons can offset themselves past their container, so the plain rows
-			// (rules, headings, hint) arrive on alpha alone.
+			// (rules, headings, settings) arrive on alpha alone.
 			foreach (PaperButton button in ButtonsOf(row)) button.PlayEntrance(delay, rowDuration);
 			_entry.TweenProperty(row, "modulate:a", 1f, rowDuration)
 				.SetDelay(delay).SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
 		}
+	}
 
-		((PaperHero)_hero).PlayTitle(TitleDelay, TitleDuration);
+	/// <summary>Rows sink away bottom first, all within <paramref name="duration"/>.</summary>
+	private void CascadeOut(List<Control> rows, double duration)
+	{
+		double rowDuration = duration * MenuRowShare;
+		double step = rows.Count > 1 ? (duration - rowDuration) / (rows.Count - 1) : 0;
+
+		_entry?.Kill();
+		_entry = CreateTween().SetParallel().SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.In);
+		for (int i = 0; i < rows.Count; i++)
+		{
+			Control row = rows[rows.Count - 1 - i];
+			foreach (PaperButton button in ButtonsOf(row)) button.PlayExit(i * step, rowDuration);
+			_entry.TweenProperty(row, "modulate:a", 0f, rowDuration).SetDelay(i * step);
+		}
+	}
+
+	public void ShowSettings() => Swap(toSettings: true);
+
+	public void ShowMenu() => Swap(toSettings: false);
+
+	/// <summary>
+	/// Replaces the menu with the settings, or back. The title stays; the current rows sink away,
+	/// then the other rows rise in. Keyboard focus follows to the matching button.
+	/// </summary>
+	private async void Swap(bool toSettings)
+	{
+		if (_leaving || _swapping || SceneTransition.IsTransitioning || toSettings == _showingSettings) return;
+		_swapping = true;
+		_showingSettings = toSettings;
+		// Android back closes the settings instead of quitting while they are up.
+		if (toSettings) GetTree().QuitOnGoBack = false;
+		PaperButton source = toSettings ? _settingsButton : _back;
+		bool keyboard = source.HasFocus();
+		source.HoldHighlight();
+
+		if (UiAnimationSettings.Default.Enabled)
+		{
+			CascadeOut(toSettings ? Rows() : SettingsRows(), SwapOutDuration);
+			await ToSignal(GetTree().CreateTimer(SwapOutDuration), SceneTreeTimer.SignalName.Timeout);
+			if (!IsInstanceValid(this) || !IsInsideTree()) return;
+		}
+
+		source.ReleaseHighlight();
+		_menu.Visible = !toSettings;
+		_resume.Visible = !toSettings && _hasResume;
+		_settingsMenu.Visible = toSettings;
+		if (!toSettings) GetTree().QuitOnGoBack = _previousQuitOnGoBack;
+		List<Control> incoming = toSettings ? SettingsRows() : Rows();
+		if (UiAnimationSettings.Default.Enabled)
+		{
+			foreach (Control row in incoming) row.Modulate = new Color(1, 1, 1, .001f);
+			CascadeIn(incoming, SwapInDuration);
+		}
+		else
+		{
+			foreach (Control row in incoming) row.Modulate = Colors.White;
+		}
+		if (keyboard) (toSettings ? _back : _settingsButton).GrabFocus();
+		_swapping = false;
+	}
+
+	public override void _Notification(int what)
+	{
+		if (what == NotificationWMGoBackRequest && _showingSettings) ShowMenu();
+	}
+
+	public override void _UnhandledKeyInput(InputEvent @event)
+	{
+		if (!_showingSettings || !@event.IsActionPressed("ui_cancel")) return;
+		ShowMenu();
+		GetViewport().SetInputAsHandled();
 	}
 
 	/// <summary>Launched directly (the app's first screen), there is no cover to wait behind.</summary>
@@ -219,7 +364,7 @@ public partial class StartScreen : Control, ITransitionScreen
 
 	private async void Navigate(PaperButton source, string path, SudokuGenerator.Difficulty difficulty = SudokuGenerator.Difficulty.Easy, bool resume = false)
 	{
-		if (_leaving || SceneTransition.IsTransitioning) return;
+		if (_leaving || _swapping || _showingSettings || SceneTransition.IsTransitioning) return;
 		_leaving = true;
 		_chosen = source;
 		source?.HoldHighlight();
@@ -246,5 +391,6 @@ public partial class StartScreen : Control, ITransitionScreen
 	{
 		Resized -= Layout;
 		_entry?.Kill();
+		GetTree().QuitOnGoBack = _previousQuitOnGoBack;
 	}
 }

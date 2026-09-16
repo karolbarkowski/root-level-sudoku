@@ -109,7 +109,7 @@ func check_pause():
 
 func check_scene_change():
     var beat = music().Beat
-    change_scene_to_file("res://Scenes/Settings/Settings.tscn")
+    change_scene_to_file("res://Scenes/StartScreen/StartScreen.tscn")
     await wait(3.0)
     check(music().IsPlaying and music().Beat > beat + 2.0, "music did not keep playing through a scene change")
 
