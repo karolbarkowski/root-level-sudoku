@@ -22,7 +22,35 @@ public partial class NumberButton : Button
 	public delegate void NumberPressedEventHandler(int number);
 
 	private int _number = 1;
-	public int Remaining { get; set; } = 9;
+	private int _remaining = 9;
+	private bool _countInitialized;
+	private readonly float[] _boxes = { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+	private Tween _stackTween;
+	public int Remaining
+	{
+		get => _remaining;
+		set
+		{
+			int next = Mathf.Clamp(value, 0, 9);
+			if (_countInitialized && next == _remaining) return;
+			_stackTween?.Kill();
+			bool animate = _countInitialized && IsInsideTree() && !Engine.IsEditorHint() && UiAnimationSettings.Default.Enabled;
+			_countInitialized = true;
+			_remaining = next;
+			AccessibilityName = $"Enter {_number}, {_remaining} remaining";
+			if (animate)
+				_stackTween = CreateTween().SetParallel().SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
+			for (int i = 0; i < _boxes.Length; i++)
+			{
+				int slot = i;
+				float target = i < next ? 1 : 0;
+				if (animate)
+					_stackTween.TweenMethod(Callable.From<float>(v => { _boxes[slot] = v; QueueRedraw(); }), _boxes[i], target, .14);
+				else _boxes[i] = target;
+			}
+			QueueRedraw();
+		}
+	}
 	private bool _selected;
 	private float _selection;
 	private Tween _selectionTween;
@@ -53,6 +81,7 @@ public partial class NumberButton : Button
 	private const float PlateGap = 4;
 
 	private readonly StyleBoxFlat _plate = new() { CornerRadiusTopLeft = 8, CornerRadiusTopRight = 8, CornerRadiusBottomLeft = 3, CornerRadiusBottomRight = 3 };
+	private readonly StyleBoxFlat _box = new() { CornerRadiusTopLeft = 3, CornerRadiusTopRight = 3, CornerRadiusBottomLeft = 3, CornerRadiusBottomRight = 3 };
 	private float _highlight;
 	private float _depression;
 	private bool _hovered;
@@ -105,7 +134,7 @@ public partial class NumberButton : Button
 
 	public override void _Pressed() => EmitSignal(SignalName.NumberPressed, _number);
 
-	public override void _ExitTree() { _feedback?.Kill(); _selectionTween?.Kill(); }
+	public override void _ExitTree() { _feedback?.Kill(); _selectionTween?.Kill(); _stackTween?.Kill(); }
 
 	/// <summary>Disabled has no change signal, so the board calls this after flipping it.</summary>
 	public void RefreshAvailability()
@@ -150,8 +179,24 @@ public partial class NumberButton : Button
 		float width = PaperStyle.Body.GetStringSize(text, fontSize: fontSize).X;
 		var baseline = new Vector2((Size.X - width) / 2, 42 + _depression);
 		DrawString(PaperStyle.Body, baseline, text, fontSize: fontSize, modulate: foreground);
-		string count = $"×{Remaining}";
-		float countWidth = PaperStyle.Body.GetStringSize(count, fontSize:13).X;
-		DrawString(PaperStyle.Body, new Vector2((Size.X-countWidth)/2,65+_depression),count,fontSize:13,modulate:foreground);
+		// Reserve room for all nine boxes even when the unselected plate is shorter.
+		// Fixed slots keep the stack anchored to the bottom as individual boxes disappear.
+		float bottom = rect.End.Y - 6;
+		float available = Mathf.Max(0, bottom - (baseline.Y + 12));
+		float gap = Mathf.Min(3, available / 26);
+		float boxHeight = Mathf.Min(16, Mathf.Max(0, (available - gap * 8) / 9));
+		float boxWidth = Mathf.Max(0, rect.Size.X - 10);
+		for (int i = 0; i < _boxes.Length; i++)
+		{
+			float progress = _boxes[i];
+			if (progress <= .001f || boxHeight <= 0) continue;
+			float scale = Mathf.Lerp(.75f, 1, progress);
+			var size = new Vector2(boxWidth * scale, boxHeight * progress);
+			var position = new Vector2(rect.Position.X + rect.Size.X / 2 - size.X / 2,
+				bottom - i * (boxHeight + gap) - size.Y);
+			_box.BgColor = PaperStyle.Ink with { A = progress * (Disabled ? .12f : .28f) };
+			DrawStyleBox(_box, new Rect2(position, size));
+		}
+		DrawSetTransform(Vector2.Zero);
 	}
 }
