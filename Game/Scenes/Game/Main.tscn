@@ -190,6 +190,7 @@ SvgIcon = ExtResource("8")
 Caption = "Undo"
 Accent = true
 ShowCaption = true
+VisualScale = 0.8
 
 [node name="RedoButton" parent="Sheet/Actions" unique_id=2125094362 instance=ExtResource("5")]
 unique_name_in_owner = true
@@ -209,6 +210,7 @@ SvgIcon = ExtResource("9")
 Caption = "Redo"
 Accent = true
 ShowCaption = true
+VisualScale = 0.8
 
 [node name="ModeToggle" parent="Sheet/Actions" unique_id=598984094 instance=ExtResource("5")]
 unique_name_in_owner = true
@@ -227,6 +229,7 @@ toggle_mode = true
 SvgIcon = ExtResource("10")
 Caption = "Notes OFF"
 ShowCaption = true
+VisualScale = 0.8
 
 [node name="NumberBar" type="GridContainer" parent="Sheet" unique_id=160603239 groups=["silent_button_sounds"]]
 unique_name_in_owner = true

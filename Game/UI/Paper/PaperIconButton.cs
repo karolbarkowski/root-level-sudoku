@@ -15,6 +15,7 @@ public partial class PaperIconButton : Button
 
 	/// <summary>Writes <see cref="Caption"/> under the icon; the circle shrinks to leave room.</summary>
 	[Export] public bool ShowCaption { get; set; }
+	[Export(PropertyHint.Range, "0.5,1,0.05")] public float VisualScale { get; set; } = 1;
 
 	private const float CaptionHeight = 24;
 	private const int CaptionSize = 15;
@@ -24,7 +25,8 @@ public partial class PaperIconButton : Button
 	private Tween _tween;
 	public override void _Ready()
 	{
-		if (TintIcon) Material = PaperStyle.IconTint;
+		Material = PaperStyle.IconTint;
+		TextureFilter = TextureFilterEnum.LinearWithMipmaps;
 		foreach (string state in new[] { "normal", "hover", "pressed", "hover_pressed", "disabled", "focus" })
 			AddThemeStyleboxOverride(state, new StyleBoxEmpty());
 		AccessibilityName = Caption;
@@ -54,20 +56,20 @@ public partial class PaperIconButton : Button
 	public override void _ExitTree() => _tween?.Kill();
 	public override void _Draw()
 	{
-		bool active = Accent || ButtonPressed;
 		float iconHeight = ShowCaption ? Size.Y - CaptionHeight : Size.Y;
 		var center = new Vector2(Size.X / 2, iconHeight / 2 + _feedback * 2);
-		float radius = Mathf.Min(Size.X, iconHeight) / 2 - 5;
-		float iconScale = ShowCaption ? 1.45f : 1.15f;
-		Color fill = active ? PaperStyle.Burgundy : PaperStyle.Surface;
+		float radius = (Mathf.Min(Size.X, iconHeight) / 2 - 5) * VisualScale;
+		float iconScale = (ShowCaption ? 1.45f : 1.15f) * VisualScale;
+		Color fill = PaperStyle.Surface;
+		if (ButtonPressed) fill = fill.Lerp(PaperStyle.Ink, .12f);
 		fill = fill.Lerp(PaperStyle.Ink, _feedback * .22f);
 		Color ink = PaperStyle.Ink;
 		if (Disabled) { fill.A = .45f; ink.A = .3f; }
-		DrawCircle(center, radius - _feedback, fill);
+		DrawCircle(center, radius - _feedback, fill, true, -1, true);
 		DrawSetTransform(center, 0, Vector2.One * iconScale);
 		if (SvgIcon != null)
 		{
-			Color icon = TintIcon ? PaperStyle.Burgundy with { A = ink.A } : ink;
+			Color icon = ink;
 			DrawTextureRect(SvgIcon, new Rect2(-14, -14, 28, 28), false, icon);
 		}
 		DrawSetTransform(Vector2.Zero);
