@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://d2wkouw0m2b86"
+path="res://.godot/imported/Atmo[82] Daylight.wav-4fd20e8523e77d41d908259c69658245.sample"
+
+[deps]
+
+source_file="res://Resources/Audio/Atmosphere/Atmo[82] Daylight.wav"
+dest_files=["res://.godot/imported/Atmo[82] Daylight.wav-4fd20e8523e77d41d908259c69658245.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=2
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

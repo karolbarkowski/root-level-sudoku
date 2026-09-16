@@ -20,6 +20,7 @@ config/icon="res://Resources/android/play_store_512.png"
 [autoload]
 
 SceneTransition="*res://UI/Transition/SceneTransition.tscn"
+Music="*res://Music/MusicDirector.tscn"
 
 [display]
 

@@ -1,0 +1,77 @@
+[gd_resource type="AudioBusLayout" format=3 uid="uid://bnhyatxql63sl"]
+
+[sub_resource type="AudioEffectHardLimiter" id="AudioEffectHardLimiter_music"]
+resource_name = "HardLimiter"
+ceiling_db = -1.0
+
+[sub_resource type="AudioEffectDelay" id="AudioEffectDelay_notes"]
+resource_name = "Delay"
+tap1_active = false
+tap2_active = false
+feedback_active = true
+feedback_delay_ms = 672.0
+feedback_level_db = -9.0
+feedback_lowpass = 2400.0
+
+[sub_resource type="AudioEffectReverb" id="AudioEffectReverb_notes"]
+resource_name = "Reverb"
+room_size = 0.85
+damping = 0.6
+hipass = 0.15
+wet = 0.35
+
+[sub_resource type="AudioEffectPanner" id="AudioEffectPanner_left"]
+resource_name = "Panner"
+pan = -0.45
+
+[sub_resource type="AudioEffectPanner" id="AudioEffectPanner_right"]
+resource_name = "Panner"
+pan = 0.45
+
+[sub_resource type="AudioEffectLowPassFilter" id="AudioEffectLowPassFilter_beds"]
+resource_name = "LowPassFilter"
+cutoff_hz = 9000.0
+
+[resource]
+bus/1/name = &"Music"
+bus/1/solo = false
+bus/1/mute = false
+bus/1/bypass_fx = false
+bus/1/volume_db = 0.0
+bus/1/send = &"Master"
+bus/1/effect/0/effect = SubResource("AudioEffectHardLimiter_music")
+bus/1/effect/0/enabled = true
+bus/2/name = &"MusicNotes"
+bus/2/solo = false
+bus/2/mute = false
+bus/2/bypass_fx = false
+bus/2/volume_db = 0.0
+bus/2/send = &"Music"
+bus/2/effect/0/effect = SubResource("AudioEffectDelay_notes")
+bus/2/effect/0/enabled = true
+bus/2/effect/1/effect = SubResource("AudioEffectReverb_notes")
+bus/2/effect/1/enabled = true
+bus/3/name = &"MusicNotesL"
+bus/3/solo = false
+bus/3/mute = false
+bus/3/bypass_fx = false
+bus/3/volume_db = 0.0
+bus/3/send = &"MusicNotes"
+bus/3/effect/0/effect = SubResource("AudioEffectPanner_left")
+bus/3/effect/0/enabled = true
+bus/4/name = &"MusicNotesR"
+bus/4/solo = false
+bus/4/mute = false
+bus/4/bypass_fx = false
+bus/4/volume_db = 0.0
+bus/4/send = &"MusicNotes"
+bus/4/effect/0/effect = SubResource("AudioEffectPanner_right")
+bus/4/effect/0/enabled = true
+bus/5/name = &"MusicBeds"
+bus/5/solo = false
+bus/5/mute = false
+bus/5/bypass_fx = false
+bus/5/volume_db = 0.0
+bus/5/send = &"Music"
+bus/5/effect/0/effect = SubResource("AudioEffectLowPassFilter_beds")
+bus/5/effect/0/enabled = true
