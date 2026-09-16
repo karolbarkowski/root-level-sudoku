@@ -177,8 +177,8 @@ public partial class PaperButton : Button
             float x = Size.X - 31 + h * 3 - inset;
             float y = Size.Y / 2 + _depression;
             float left = x - ArrowSize * 2 / 3;
-            // A negative width mirrors the left-pointing icon.
-            DrawTextureRect(Arrow, new Rect2(left + ArrowSize, y - ArrowSize / 2, -ArrowSize, ArrowSize), false, foreground);
+            // A negative width mirrors the left-pointing icon in place (the rect keeps its position).
+            DrawTextureRect(Arrow, new Rect2(left, y - ArrowSize / 2, -ArrowSize, ArrowSize), false, foreground);
         }
     }
 }
