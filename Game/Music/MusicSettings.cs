@@ -7,7 +7,7 @@ public static class MusicSettings
 {
     private const string Path = "user://settings.cfg";
     private static readonly ConfigFile Config = new();
-    public static bool Enabled { get; private set; } = true;
+    public static bool Enabled { get; private set; }
     public static bool SoundEnabled { get; private set; } = true;
     public static bool HighlightEnabled { get; private set; } = true;
     public static bool ShowRemaining { get; private set; } = true;
@@ -19,7 +19,7 @@ public static class MusicSettings
         var error = Config.Load(Path);
         if (error != Error.Ok && error != Error.FileNotFound)
             GD.PushWarning($"Cannot load settings: {error}");
-        Enabled = Config.GetValue("audio", "music_enabled", true).AsBool();
+        Enabled = Config.GetValue("audio", "music_enabled", false).AsBool(); // off until the player turns it on
         SoundEnabled = Config.GetValue("audio", "sound_enabled", true).AsBool();
         HighlightEnabled = Config.GetValue("board", "highlight_enabled", true).AsBool();
         ShowRemaining = Config.GetValue("board", "show_remaining", true).AsBool();
