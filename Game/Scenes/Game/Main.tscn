@@ -154,7 +154,7 @@ SvgIcon = ExtResource("12")
 TintIcon = true
 Caption = "Start over"
 
-[node name="BoardArea" type="Control" parent="Sheet" unique_id=1832515540]
+[node name="BoardArea" type="Control" parent="Sheet" unique_id=1832515540 groups=["silent_button_sounds"]]
 custom_minimum_size = Vector2(476, 476)
 anchors_preset = 0
 offset_top = 212.0
@@ -165,7 +165,7 @@ offset_bottom = 688.0
 unique_name_in_owner = true
 layout_mode = 1
 
-[node name="Actions" type="HBoxContainer" parent="Sheet" unique_id=1018014855]
+[node name="Actions" type="HBoxContainer" parent="Sheet" unique_id=1018014855 groups=["silent_button_sounds"]]
 layout_mode = 0
 offset_top = 836.0
 offset_right = 476.0
@@ -228,7 +228,7 @@ SvgIcon = ExtResource("10")
 Caption = "Notes OFF"
 ShowCaption = true
 
-[node name="NumberBar" type="GridContainer" parent="Sheet" unique_id=160603239]
+[node name="NumberBar" type="GridContainer" parent="Sheet" unique_id=160603239 groups=["silent_button_sounds"]]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 220)
 layout_mode = 1

@@ -232,6 +232,7 @@ public partial class Main : Control, ITransitionScreen
     {
         if (_solved || _leaving) return;
         _solved = true;
+        GameSounds.BoardCompleted();
         // A solved puzzle cannot be resumed; the difficulty stays for the next one.
         GameSession.Clear();
         _board.ClearSelection();
@@ -280,7 +281,9 @@ public partial class Main : Control, ITransitionScreen
 
     public void PlayEntry()
     {
-        if (!UiAnimationSettings.Default.Enabled || _leaving) return;
+        if (_leaving || Engine.IsEditorHint()) return;
+        GameSounds.BoardShown();
+        if (!UiAnimationSettings.Default.Enabled) return;
         _entry?.Kill();
         _entry = CreateTween().SetParallel().SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
         for (int i = 0; i < _sections.Length; i++)

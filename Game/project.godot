@@ -19,6 +19,7 @@ config/icon="res://Resources/android/play_store_512.png"
 
 [autoload]
 
+GameSounds="*res://Audio/GameSounds.cs"
 SceneTransition="*res://UI/Transition/SceneTransition.tscn"
 Music="*res://Music/MusicDirector.tscn"
 
