@@ -7,7 +7,7 @@ namespace Generators.Sudoku.Graders;
 /// <summary>
 /// A rule-based Sudoku solver that mimics the techniques a human would use and reports the
 /// hardest technique it needed. It never guesses: if the implemented techniques can't finish
-/// the puzzle it reports <see cref="Difficulty.Beyond"/>. Every elimination it makes is a
+/// the puzzle it reports <see cref="Difficulty.Invalid"/>. Every elimination it makes is a
 /// forced deduction, so a full solve also proves the puzzle has a single solution.
 /// </summary>
 internal sealed class RuleBasedGrader
@@ -50,9 +50,9 @@ internal sealed class RuleBasedGrader
 
     /// <summary>
     /// Solves a copy of <paramref name="puzzle"/> with human techniques and returns the
-    /// hardest one required, or <see cref="Difficulty.Beyond"/> if it can't be finished.
+    /// hardest one required, or <see cref="Difficulty.Invalid"/> if it can't be finished.
     /// </summary>
-    public Difficulty Grade(ReadOnlySpan<byte> puzzle) => Grade(puzzle, Difficulty.Beyond);
+    public Difficulty Grade(ReadOnlySpan<byte> puzzle) => Grade(puzzle, Difficulty.Invalid);
 
     /// <summary>
     /// Same as <see cref="Grade(ReadOnlySpan{byte})"/>, but bails out as soon as the solve is
@@ -83,7 +83,7 @@ internal sealed class RuleBasedGrader
             if (ApplyXYWing()) { Raise(ref hardest, Difficulty.Expert); if (hardest > maxDifficulty) return hardest; continue; }
 
             // Nothing advanced the grid: this puzzle is beyond our solver.
-            return Difficulty.Beyond;
+            return Difficulty.Invalid;
         }
 
         return hardest;

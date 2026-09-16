@@ -151,9 +151,7 @@ public partial class SudokuGenerator
         {
             byte saved = board.state[index];
             board.state[index] = 0;
-            Difficulty grade = target == Difficulty.Beyond
-                ? board.UniquenessGrader.Grade(board.state)
-                : board.RuleGrader.Grade(board.state, target); // stop early once it's provably too hard
+            Difficulty grade = board.RuleGrader.Grade(board.state, target); // stop early once it's provably too hard
             if (grade > target) board.state[index] = saved;
         }
     }

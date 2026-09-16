@@ -1,6 +1,6 @@
 # Other Sudoku grading approaches
 
-This project currently uses a human-style rule grader for `Easy` through `Expert` and a uniqueness-only backtracking grader for `Beyond`. The following approaches are potential additions or replacements, depending on what “difficulty” should mean.
+This project currently uses a human-style rule grader for every difficulty, `Easy` through `Expert`. The following approaches are potential additions or replacements, depending on what “difficulty” should mean.
 
 | Approach | What it measures | Advantages | Disadvantages | Best fit |
 |---|---|---|---|---|
@@ -14,9 +14,6 @@ This project currently uses a human-style rule grader for `Easy` through `Expert
 
 ## Recommended path
 
-Keep the current two graders as the correctness baseline:
-
-- Use `RuleBasedGrader` when a human-explainable band and hints are required.
-- Use `UniquenessGrader` whenever uniqueness is the only requirement.
+Keep `RuleBasedGrader` as the correctness baseline: it gives a human-explainable band, powers hints, and a full solve proves uniqueness.
 
 If more resolution is needed, add a weighted score to `RuleBasedGrader` before introducing a separate solver. It reuses existing candidate state, retains explainability, and can remain allocation-free. For much faster high-volume uniqueness checks, consider an exact-cover/DLX validator; use it as a validator alongside—not as a replacement for—the human-oriented grader.

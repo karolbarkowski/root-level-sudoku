@@ -52,21 +52,17 @@ Cells are visited in random order. Each is emptied, the puzzle is graded, and th
 back if the grade is now harder than the target. The result is the sparsest puzzle this pass
 finds that still grades at or below the target difficulty.
 
-| Difficulty | Techniques required | Grader |
-|---|---|---|
-| Easy | Naked / hidden singles | `RuleBasedGrader` |
-| Medium | + locked candidates | `RuleBasedGrader` |
-| Hard | + naked / hidden pairs and triples | `RuleBasedGrader` |
-| Expert | + X-Wing, XY-Wing | `RuleBasedGrader` |
-| Beyond | Anything, as long as the solution is unique | `UniquenessGrader` |
+| Difficulty | Techniques required |
+|---|---|
+| Easy | Naked / hidden singles |
+| Medium | + locked candidates |
+| Hard | + naked / hidden pairs and triples |
+| Expert | + X-Wing, XY-Wing |
 
-- **`RuleBasedGrader`** solves the puzzle like a human would, using the cheapest technique that
-  makes progress, and reports the hardest one it needed. A full solve means every placement was
-  forced, which also proves the solution is unique. It also powers in-game hints
-  (`TryFindNextMove`).
-- **`UniquenessGrader`** is a backtracking solver (fewest-candidates cell first) that stops at a
-  second solution. `Beyond` puzzles may need guessing, so only this grader can prove they are
-  valid.
+`RuleBasedGrader` solves the puzzle like a human would, using the cheapest technique that makes
+progress, and reports the hardest one it needed. A full solve means every placement was forced,
+which also proves the solution is unique. A puzzle it can't finish grades as `Invalid` and is
+never produced. The same grader powers in-game hints (`TryFindNextMove`).
 
 More detail: `Generators/Sudoku/Graders/*.md`.
 

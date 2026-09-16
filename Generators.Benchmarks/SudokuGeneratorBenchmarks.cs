@@ -17,7 +17,4 @@ public class SudokuGeneratorBenchmarks
 
     [Benchmark]
     public void GenerateExpertIntoReusedBoard() => SudokuGenerator.Generate(SudokuGenerator.Difficulty.Expert, _reusableBoard);
-
-    [Benchmark]
-    public void GenerateBeyondIntoReusedBoard() => SudokuGenerator.Generate(SudokuGenerator.Difficulty.Beyond, _reusableBoard);
 }

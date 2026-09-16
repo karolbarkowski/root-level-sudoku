@@ -19,6 +19,10 @@ public partial class PaperButton : Button
     [Export] public Texture2D LeadingIcon { get; set; }
 
     private const float IconSize = 26;
+    private const float ArrowSize = 36;
+    private static Texture2D _arrow;
+    // The Back button's chevron, mirrored, so every arrow in the UI shares one icon.
+    private static Texture2D Arrow => _arrow ??= GD.Load<Texture2D>("res://Resources/icons/arrow-left.svg");
     private const float IconGap = 10;
     private float _highlight;
     private float _depression;
@@ -97,7 +101,9 @@ public partial class PaperButton : Button
 
     public override void _Ready()
     {
-        if (LeadingIcon != null) Material = PaperStyle.IconTint;
+        if (LeadingIcon != null || !Secondary) Material = PaperStyle.IconTint;
+        // Icons are rasterized larger than drawn; mipmaps keep the downscale crisp.
+        TextureFilter = TextureFilterEnum.LinearWithMipmaps;
         MouseDefaultCursorShape = CursorShape.PointingHand;
         AccessibilityName = Secondary ? Caption : $"Start {Caption} puzzle";
         CustomMinimumSize = new Vector2(100, Ghost ? 52 : Secondary ? 66 : 68);
@@ -167,10 +173,12 @@ public partial class PaperButton : Button
         {
             DrawString(PaperStyle.Body, new Vector2(20, baseline - 3), Index, fontSize: 20, modulate: PaperStyle.Burgundy.Lerp(PaperStyle.Ink, h));
             DrawString(PaperStyle.Body, new Vector2(78, baseline), Caption, fontSize: 31, modulate: foreground);
+            // x is the chevron's tip; in the mirrored icon the tip sits two thirds across.
             float x = Size.X - 31 + h * 3 - inset;
             float y = Size.Y / 2 + _depression;
-            DrawLine(new Vector2(x - 23, y), new Vector2(x, y), foreground, 1.6f, true);
-            DrawPolyline(new[] { new Vector2(x - 10, y - 10), new Vector2(x, y), new Vector2(x - 10, y + 10) }, foreground, 1.6f, true);
+            float left = x - ArrowSize * 2 / 3;
+            // A negative width mirrors the left-pointing icon.
+            DrawTextureRect(Arrow, new Rect2(left + ArrowSize, y - ArrowSize / 2, -ArrowSize, ArrowSize), false, foreground);
         }
     }
 }

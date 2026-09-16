@@ -10,7 +10,7 @@
 | `Medium` | Locked candidates were required. |
 | `Hard` | Naked or hidden pairs/triples were required. |
 | `Expert` | X-Wing or XY-Wing was required. |
-| `Beyond` | The implemented techniques could not finish the puzzle. |
+| `Invalid` | The implemented techniques could not finish the puzzle. |
 
 It also provides `TryFindNextMove`, which returns the next forced placement and the technique that exposed it. This powers the in-game hint feature.
 
@@ -22,7 +22,7 @@ The supported order is: naked single, hidden single, locked candidates, naked su
 
 ## Uniqueness guarantee
 
-When the grader completely solves a valid puzzle, every placement was forced. Therefore a completed solve also proves uniqueness. This is why `SudokuGenerator` uses this grader for `Easy` through `Expert` clue removal.
+When the grader completely solves a valid puzzle, every placement was forced. Therefore a completed solve also proves uniqueness. This is why `SudokuGenerator` uses this grader for clue removal at every difficulty.
 
 ## Performance and allocation behaviour
 
@@ -30,4 +30,4 @@ The grader owns its two scratch 9x9 arrays and is retained by `Board`. Calls to 
 
 ## Limitations
 
-`Beyond` means only that this implementation could not solve the puzzle using its current technique set. It is not a numeric difficulty score, nor evidence that the puzzle is invalid. For `Beyond` generation, use `UniquenessGrader` to prove the puzzle has exactly one solution.
+`Invalid` means only that this implementation could not solve the puzzle using its current technique set. The puzzle may still have a unique solution that needs chains or guessing; the generator simply never produces such puzzles.

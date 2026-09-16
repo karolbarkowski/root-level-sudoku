@@ -18,7 +18,7 @@ func run():
         current_scene = scene
         var hero = scene.get_node("Hero")
         var first = scene.get_node("Menu/Difficulties/Easy")
-        var last = scene.get_node("Menu/Difficulties/Beyond")
+        var last = scene.get_node("Menu/Difficulties/Expert")
         check(hero.modulate.a < .01, "Entry must be prepared on every scene visit")
         # Cold-start rendering can consume the first timer delta while the UI is still warming.
         # Observe the actual entrance, whose budget begins after that prepared frame.

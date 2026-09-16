@@ -13,7 +13,6 @@ public class Board
     private Stack<MoveRecord>? _undo;
     private Stack<MoveRecord>? _redo;
     private readonly RuleBasedGrader _hintGrader = new();
-    private readonly UniquenessGrader _uniquenessGrader = new();
 
     public Board()
     {
@@ -70,7 +69,6 @@ public class Board
             : null;
 
     internal RuleBasedGrader RuleGrader => _hintGrader;
-    internal UniquenessGrader UniquenessGrader => _uniquenessGrader;
 
     /// <summary>The 81 cell values, row by row (0 = empty).</summary>
     public int[] GetCells()
