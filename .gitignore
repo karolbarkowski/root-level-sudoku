@@ -490,3 +490,4 @@ pids
 *.pid
 *.seed
 *.pid.lock
+sudoku.aab
