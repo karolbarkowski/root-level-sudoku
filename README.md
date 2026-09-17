@@ -3,6 +3,12 @@
 An endless Sudoku game for mobile, built with Godot 4.7 (C#). Every puzzle is generated on the
 device at the chosen difficulty, and a generative ambient soundtrack plays underneath.
 
+<p align="center">
+  <img src="PlayStoreResources/Phone1_Store.png" width="200"  />
+  <img src="PlayStoreResources/Phone2_Store.png" width="200"  />
+  <img src="PlayStoreResources/Phone3_Store.png" width="200"  />
+</p>
+
 ## Project structure
 
 ```
