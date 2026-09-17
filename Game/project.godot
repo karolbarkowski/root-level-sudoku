@@ -17,6 +17,10 @@ boot_splash/bg_color=Color(0.153, 0.184, 0.2, 1)
 boot_splash/show_image=false
 config/icon="res://Resources/android/play_store_512.png"
 
+[audio]
+
+buses/default_bus_layout="uid://bnhyatxql63sl"
+
 [autoload]
 
 GameSounds="*res://Audio/GameSounds.cs"
